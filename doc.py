@@ -39,5 +39,5 @@ def extraction_tesseract(fichier_pdf):
         print("\nVICTOIRE ! Terminé à la vitesse de l'éclair.")
 
 if __name__ == "__main__":
-    fichier_pdf = "CDC Arcelor mittal.pdf" 
+    fichier_pdf = "Mail DeepBrain.docx" 
     extraction_tesseract(fichier_pdf)
