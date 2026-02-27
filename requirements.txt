@@ -1,1 +1,5 @@
 pdf2image
+ollama
+pytesseract
+docling
+tesserocr
