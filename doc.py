@@ -20,6 +20,15 @@
 from pdf2image import convert_from_path
 import pytesseract
 import ollama
+import subprocess
+
+def conversion_docx2pdf(fichier_docx):
+    resultat = subprocess.run(["libreoffice", "--headless", "--convert-to", "pdf", fichier_docx, "--outdir", "."], capture_output=True, text=True)
+    
+    new_pdf = fichier_docx.replace(".docx", ".pdf")
+    return new_pdf
+    
+
 
 def extraction_tesseract(fichier_pdf):
     print(f"1. Découpage du PDF '{fichier_pdf}'...")
@@ -39,7 +48,7 @@ def extraction_tesseract(fichier_pdf):
 
 def ChatOllama(texte_complet):
     response: ollama.ChatResponse = ollama.chat(
-        model="llama3.3:70b",
+        model="qwen2.5-coder:32b",
         messages=[
             {
                 'role': 'system', 
@@ -82,8 +91,14 @@ def ChatOllama(texte_complet):
     print(response.message.content)
 
 if __name__ == "__main__":
-    fichier_pdf = "VEGA-Banc-Besoin_Materiel_banc -A.pdf" 
-    txt = extraction_tesseract(fichier_pdf)
+    # fichier_pdf = "VEGA-Banc-Besoin Materiel banc -A.pdf" 
+    # txt = extraction_tesseract(fichier_pdf)
+    # print(txt)
+    # ChatOllama(txt)
+    fichier_docx = "Mail TALC SI.docx"
+    pdf = conversion_docx2pdf(fichier_docx)
+    txt = extraction_tesseract(pdf)
     print(txt)
     ChatOllama(txt)
+
     print("=================FIN DU PROGRAMME===========")
