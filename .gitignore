@@ -210,3 +210,5 @@ __marimo__/
 *.pdf
 *.docx
 Mail DeepBrain.docx
+.p2venv/
+p2venv/

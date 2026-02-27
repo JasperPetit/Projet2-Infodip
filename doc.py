@@ -17,10 +17,16 @@
 #     messi(fichier_pdf)
 
 
+from docling.document_converter import DocumentConverter, PdfFormatOption
+from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.datamodel.base_models import InputFormat, ImageRefMode
+f
 from pdf2image import convert_from_path
 import pytesseract
 import ollama
-
+import docling
+import time
+""" 
 def extraction_tesseract(fichier_pdf):
     print(f"1. Découpage du PDF '{fichier_pdf}'...")
     pages = convert_from_path(fichier_pdf)
@@ -35,11 +41,30 @@ def extraction_tesseract(fichier_pdf):
         
         texte_complet += f"\n\n=== PAGE {index + 1} ===\n{texte}\n"
     return texte_complet
+"""
+def extraction_texte(fichier_pdf):
+    pipeline_options = PdfPipelineOptions()
+    pipeline_options.do_ocr=True
+    # pipeline_options.ocr_langs=["fra","eng"]
+    pipeline_options.ocr_options.force_full_page_ocr=False
 
+    pipeline_options.ocr_options = docling.datamodel.pipeline_options.RapidOcrOptions()
+
+    converter = DocumentConverter(
+        format_options={
+            InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+        }
+    )
+
+    resultat = converter.convert(fichier_pdf)
+    return resultat.document.export_to_markdown(
+        image_mode=ImageRefMode.PLACEHOLDER, 
+        include_annotations=True
+    )
 
 def ChatOllama(texte_complet):
     response: ollama.ChatResponse = ollama.chat(
-        model="llama3.3:70b",
+        model="qwen2.5-coder:32b",
         messages=[
             {
                 'role': 'system', 
@@ -82,8 +107,15 @@ def ChatOllama(texte_complet):
     print(response.message.content)
 
 if __name__ == "__main__":
-    fichier_pdf = "VEGA-Banc-Besoin_Materiel_banc -A.pdf" 
-    txt = extraction_tesseract(fichier_pdf)
+    fichier_pdf = "CDC Arcelor mittal.pdf" 
+    start = time.time()
+    txt = extraction_texte(fichier_pdf)
     print(txt)
+    print("=================RESULTAT DE L'EXTRACTION===========")
+    endRead = time.time()
     ChatOllama(txt)
     print("=================FIN DU PROGRAMME===========")
+    endLLM = time.time()
+    print(f"Temps d'extraction : {start - endRead}")
+    print(f"Temps de traitement LLM : {endRead - endLLM}")
+    print(f"Temps total : {start - endLLM}")
