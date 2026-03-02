@@ -17,36 +17,69 @@
 #     messi(fichier_pdf)
 
 
-from pdf2image import convert_from_path
-import pytesseract
 import ollama
-import subprocess
+from docling.document_converter import DocumentConverter, PdfFormatOption
+from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.datamodel.base_models import InputFormat
 
-def conversion_docx2pdf(fichier_docx):
-    resultat = subprocess.run(["libreoffice", "--headless", "--convert-to", "pdf", fichier_docx, "--outdir", "."], capture_output=True, text=True)
+# Import des types d'éléments pour les reconnaître
+from docling_core.types.doc.document import TextItem, TableItem, PictureItem
+
+import pytesseract
+
+def extraction_sur_mesure(chemin_fichier):
+    print(f"\n--- Démembrement du document : {chemin_fichier} ---")
     
-    new_pdf = fichier_docx.replace(".docx", ".pdf")
-    return new_pdf
+    # 1. Configuration : On force Docling à "découper" physiquement les images
+    options = PdfPipelineOptions()
+    options.generate_picture_images = True # Indispensable pour récupérer l'image PIL
     
-
-
-def extraction_tesseract(fichier_pdf):
-    print(f"1. Découpage du PDF '{fichier_pdf}'...")
-    pages = convert_from_path(fichier_pdf)
-    texte_complet = ""
-
-    print(f"2. Lecture par Tesseract ({len(pages)} pages)...")
-    for index, page_img in enumerate(pages):
-        print(f"-> Scan foudroyant de la page {index + 1}...")
+    convertisseur = DocumentConverter(
+        format_options={
+            InputFormat.PDF: PdfFormatOption(pipeline_options=options)
+        }
+    )
+    
+    print("1. Scan de la structure par Docling...")
+    resultat = convertisseur.convert(chemin_fichier)
+    doc = resultat.document
+    print("===========Resultat===========")
+    print(resultat)
+    print("============FIN DE RESULTAT===========")
+    texte_final = ""
+    
+    print("2. Parcours intelligent des éléments...")
+    # doc.iterate_items() lit le document de haut en bas, dans le bon ordre !
+    for item, level in doc.iterate_items():
         
-        # Le scan OCR pur et dur (langue configurée sur Français + Anglais)
-        texte = pytesseract.image_to_string(page_img, lang='fra+eng')
-        
-        texte_complet += f"\n\n=== PAGE {index + 1} ===\n{texte}\n"
-    return texte_complet
+        # CAS A : C'est du texte normal (paragraphes, titres...)
+        if isinstance(item, TextItem):
+            texte_final += f"{item.text}\n\n"
+            
+        # CAS B : C'est un tableau (on garde le beau format Markdown pour Qwen)
+        elif isinstance(item, TableItem):
+            texte_final += f"{item.export_to_markdown()}\n\n"
+            
+        # CAS C : C'est une image ! (On sort l'arme lourde : Tesseract)
+        elif isinstance(item, PictureItem):
+            print("   -> Image détectée ! Lancement du scan Tesseract...")
+            
+            # On récupère l'image sous forme de variable (format PIL Image)
+            image_pil = item.get_image(doc)
+            
+            if image_pil is not None:
+                # Ton code Tesseract classique entre en action
+                texte_image = pytesseract.image_to_string(image_pil, lang='fra+eng')
+                
+                # On ajoute des balises pour aider Qwen à comprendre d'où ça vient
+                texte_final += f"--- DÉBUT TEXTE LU SUR IMAGE ---\n{texte_image.strip()}\n--- FIN TEXTE LU SUR IMAGE ---\n\n"
+                
+    print("\nVICTOIRE ! Assemblage terminé.")
+    print(texte_final)
+    return texte_final
 
 
-def ChatOllama(texte_complet):
+def ChatOllama(texte_final):
     response: ollama.ChatResponse = ollama.chat(
         model="qwen2.5-coder:32b",
         messages=[
@@ -59,7 +92,7 @@ def ChatOllama(texte_complet):
              "content": f'''Ce document est un cahier des charges. Dans celui-ci est décrit une/plusieurs machine informatique/ordinateur que l’entreprise voudrais commander a Infodip. Je voudrais que tu réccupere dans ce document la liste de toutes les machines qui sont commander. 
                 Tu me repondera sous une forme d’une liste JSON strict uniquement, je ne veux PAS D4AUTRE TEXTE OU EXPLICATION QUE JE JSON. Si 2 pc on exactement la meme configuration a un composant de difference alors tu les traitera comme 2 machine disctincte. Lorsqu’un element est en quantité multiple tu lu mettera “yx” en préfixe ou y est ka quantité et x represente le symbole fois. 
                 Tu interprettera tout seul la catégorie en choisissant celle qui te parait la plus pertinente de chaque exigence en faisant attention a les ajouter a une seul catégorie. 
-                Voici le texte : {texte_complet}
+                Voici le texte : {texte_final}
                 Pour chaque machine que tu trouvera tu l’ajoutera au JSON avec le format suivant le texte entre chevron est un exemple de valeur, ce n’est pas le texte que dtu doit mettre dans le JSON final :
                 <template>
                 {{
@@ -90,15 +123,21 @@ def ChatOllama(texte_complet):
     )
     print(response.message.content)
 
-if __name__ == "__main__":
-    # fichier_pdf = "VEGA-Banc-Besoin Materiel banc -A.pdf" 
-    # txt = extraction_tesseract(fichier_pdf)
-    # print(txt)
-    # ChatOllama(txt)
-    fichier_docx = "Mail TALC SI.docx"
-    pdf = conversion_docx2pdf(fichier_docx)
-    txt = extraction_tesseract(pdf)
-    print(txt)
-    ChatOllama(txt)
 
-    print("=================FIN DU PROGRAMME===========")
+
+if __name__ == "__main__":
+    # Tu peux mettre un .pdf ou un .docx ici !
+    fichier = "CDC Arcelor mittal.pdf" 
+    
+    # On lance la nouvelle extraction magique
+    texte_propre = extraction_sur_mesure(fichier)
+    
+    # On sauvegarde pour que tu puisses vérifier à l'oeil nu (très utile pour débugger)
+    with open('resultat_docling.md', 'w', encoding='utf-8') as f:
+        f.write(texte_propre)
+    
+    # On envoie le Markdown parfait à ton Qwen
+    print("\n--- Envoi à Qwen pour génération du JSON ---")
+    ChatOllama(texte_propre)
+    
+    print("\n================= FIN DU PROGRAMME ===============")
