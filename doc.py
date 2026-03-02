@@ -60,6 +60,8 @@ def extraction_sur_mesure(chemin_fichier):
     return texte_final
 
 
+
+
 def ChatOllama(texte_complet):
     response: ollama.ChatResponse = ollama.chat(
         model="qwen2.5-coder:32b",
@@ -163,4 +165,3 @@ if __name__ == "__main__":
         print([str(precedent_JSON[elem] )+ "\n" for elem in cles])
 
     print("=================FIN DU PROGRAMME===========")
-
