@@ -16,16 +16,20 @@
 #     fichier_pdf = "Mail TALC SI.docx" 
 #     messi(fichier_pdf)
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 from docling.document_converter import DocumentConverter, PdfFormatOption
-from docling.datamodel.pipeline_options import PdfPipelineOptions
-from docling.datamodel.base_models import InputFormat, ImageRefMode
-f
+from docling.datamodel.pipeline_options import PdfPipelineOptions, TesseractOcrOptions
+from docling.datamodel.base_models import InputFormat
+from docling_core.types.doc import ImageRefMode
 from pdf2image import convert_from_path
 import pytesseract
 import ollama
 import docling
 import time
+
 """ 
 def extraction_tesseract(fichier_pdf):
     print(f"1. Découpage du PDF '{fichier_pdf}'...")
@@ -45,10 +49,15 @@ def extraction_tesseract(fichier_pdf):
 def extraction_texte(fichier_pdf):
     pipeline_options = PdfPipelineOptions()
     pipeline_options.do_ocr=True
+    pipeline_options.generate_picture_images = True
     # pipeline_options.ocr_langs=["fra","eng"]
+    pipeline_options.ocr_options.bitmap_area_threshold = 0
+    pipeline_options.ocr_options = docling.datamodel.pipeline_options.RapidOcrOptions()
     pipeline_options.ocr_options.force_full_page_ocr=False
 
-    pipeline_options.ocr_options = docling.datamodel.pipeline_options.RapidOcrOptions()
+
+
+    pipeline_options.ocr_options.bitmap_area_threshold = 0
 
     converter = DocumentConverter(
         format_options={
@@ -57,10 +66,14 @@ def extraction_texte(fichier_pdf):
     )
 
     resultat = converter.convert(fichier_pdf)
-    return resultat.document.export_to_markdown(
+    texte_brut =  resultat.document.export_to_markdown(
         image_mode=ImageRefMode.PLACEHOLDER, 
         include_annotations=True
     )
+
+    texte_propre = texte_brut.replace("", "").strip()
+
+    return texte_propre
 
 def ChatOllama(texte_complet):
     response: ollama.ChatResponse = ollama.chat(
@@ -116,6 +129,6 @@ if __name__ == "__main__":
     ChatOllama(txt)
     print("=================FIN DU PROGRAMME===========")
     endLLM = time.time()
-    print(f"Temps d'extraction : {start - endRead}")
-    print(f"Temps de traitement LLM : {endRead - endLLM}")
-    print(f"Temps total : {start - endLLM}")
+    print(f"Temps d'extraction : {endRead - start }")
+    print(f"Temps de traitement LLM : {endLLM - endRead}")
+    print(f"Temps total : {endLLM - start}")
