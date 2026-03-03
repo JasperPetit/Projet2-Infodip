@@ -9,7 +9,7 @@ from docling_core.types.doc.document import TextItem, TableItem, PictureItem
 import time
 import pytesseract
 import logic
-
+import json
 
 import pytesseract
 
@@ -103,18 +103,64 @@ def ChatOllama(texte_complet):
         options={"temperature": 0}
     )
     print(response.message.content)
+    reponse_JSON = json.loads(response.message.content)
+    return reponse_JSON
+
+def conversion_machine(tableau_machine:list):
+    resultat = []
+    for machine in tableau_machine:
+        new_machine = logic.machine(machine)
+        resultat.append(new_machine)
+    return resultat
+
+def conversion_composant(dictionnaire:dict):
+    config_dict:dict = {
+        "Format": [],
+        "CPU": [],
+        "Memory": [],
+        "Audio component": [],
+        "GPU": [],
+        "Network": [],
+        "Out of band management": [],
+        "USB": [],
+        "OS": [],
+        "Storage": [],
+        "Noise": [],
+        "Warranty": [],
+        "License": [],
+        "Other": []
+    }
+
+    machines:list = dictionnaire.keys()
+    
 
 
 if __name__ == "__main__":
-    fichier_pdf = "CDC Arcelor mittal.pdf" 
+    choix = input("Voulez-vous faire une extraction sur mesure (1) ou utiliser le dernier JSON traité (2) ? ")
     start = time.time()
-    txt = extraction_sur_mesure(fichier_pdf)
-    print(txt)
-    print("=================RESULTAT DE L'EXTRACTION===========")
-    endRead = time.time()
-    ChatOllama(txt)
+    if choix == "1" :
+        fichier_pdf = "CDC Arcelor mittal.pdf" 
+        txt = extraction_sur_mesure(fichier_pdf)
+        print(txt)
+        print("=================RESULTAT DE L'EXTRACTION===========")
+        endRead = time.time()
+        reponse_JSON = ChatOllama(txt)
+        endLLM = time.time()
+        with open("resultat.json", "w") as f:
+            json.dump(reponse_JSON, f, indent=4)
+        print(reponse_JSON)
+        print("=================PERFORMANCE===========")
+        print(f"Temps d'extraction : {endRead - start}")
+        print(f"Temps de traitement LLM : {endLLM - endRead}")
+        print(f"Temps total : {endLLM - start}")
+
+    if choix == "2" : 
+        print("=================LECTURE DU DERNIER JSON TRAITE===========")
+        with open("resultat.json", "r") as f:
+            precedent_JSON = json.load(f)
+        cles = precedent_JSON.keys()
+        print(cles)
+        print([str(precedent_JSON[elem] )+ "\n" for elem in cles])
+
     print("=================FIN DU PROGRAMME===========")
-    endLLM = time.time()
-    print(f"Temps d'extraction : {start - endRead}")
-    print(f"Temps de traitement LLM : {endRead - endLLM}")
-    print(f"Temps total : {start - endLLM}")
+

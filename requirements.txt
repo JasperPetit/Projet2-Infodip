@@ -3,3 +3,4 @@ ollama
 pytesseract
 docling
 tesserocr
+flask
