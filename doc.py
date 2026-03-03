@@ -1,4 +1,12 @@
 
+#Ces lignes sont des constantes qui definissent les positions de départ pour l'ajout des machines et des composant dans le fichier excel.
+#Si vous voulez les modifier, il faut considerer que A=1,B=2,etc et que ligne 1=1, ligne=2=2,etc.
+COLONNE_DEBUT_MACHINE = 5
+LIGNE_DEBUT_MACHINE = 10
+COLONNE_DEBUT_MANDATORY = 2
+LIGNE_DEBUT_MANDATORY = 12
+
+
 import ollama
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.pipeline_options import PdfPipelineOptions
@@ -12,9 +20,14 @@ import logic
 import json
 
 import pytesseract
+import openpyxl
+import os
+
+
 
 def extraction_sur_mesure(chemin_fichier):
     print(f"\n--- Démembrement du document : {chemin_fichier} ---")
+
     
     # 1. Configuration : On force Docling à "découper" physiquement les images
     options = PdfPipelineOptions()
@@ -108,6 +121,11 @@ def ChatOllama(texte_complet):
     reponse_JSON = json.loads(response.message.content)
     return reponse_JSON
 
+
+#def check_doublon(dictionnaire_composant:dict, composant_ajoute:logic.composant):
+
+
+
 def conversion_machine(tableau_machine:list):
     resultat = []
     for machine in tableau_machine:
@@ -133,15 +151,40 @@ def conversion_composant(dictionnaire:dict):
         "Other": []
     }
 
-    machines:list = dictionnaire.keys()
-    
+    liste_machines:list = dictionnaire.keys()
+    for machine in liste_machines:
+        categorie:list = dictionnaire[machine].keys()
+        for current_categorie in categorie:
+            for current_composant in dictionnaire[machine][current_categorie]:
+                
+                new_composant = logic.composant(current_composant,current_categorie)
+#                check_doublon(new_composant,config_dict)
+                config_dict[current_categorie].append(new_composant)
+    return config_dict
+
+
+def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
+    wb = openpyxl.load_workbook("template.xlsx")
+    ws = wb.active
+    for indice_machine in range(len(liste_machines)):
+
+        current_machine = liste_machines[indice_machine]
+        current_row = LIGNE_DEBUT_MACHINE
+        current_column = COLONNE_DEBUT_MACHINE + indice_machine
+
+        ws.cell(row=current_row, column=current_column).value = current_machine.name
+    nom_coupe = nom_fichier.split('.')[0] 
+    #Changer l'extension du fichier ici ci l'extension de la template change
+    wb.save(f"resultat/{nom_coupe}.xlsx")
+
 
 
 if __name__ == "__main__":
     choix = input("Voulez-vous faire une extraction sur mesure (1) ou utiliser le dernier JSON traité (2) ? ")
     start = time.time()
+    fichier_pdf = "CDC Arcelor mittal.pdf" 
+
     if choix == "1" :
-        fichier_pdf = "CDC Arcelor mittal.pdf" 
         txt = extraction_sur_mesure(fichier_pdf)
         print(txt)
         print("=================RESULTAT DE L'EXTRACTION===========")
@@ -160,8 +203,14 @@ if __name__ == "__main__":
         print("=================LECTURE DU DERNIER JSON TRAITE===========")
         with open("resultat.json", "r") as f:
             precedent_JSON = json.load(f)
-        cles = precedent_JSON.keys()
-        print(cles)
-        print([str(precedent_JSON[elem] )+ "\n" for elem in cles])
+        liste_composants = conversion_composant(precedent_JSON)
+        liste_machines = conversion_machine(precedent_JSON.keys())
+        insertion_excel(config_dict=liste_composants, liste_machines=liste_machines, nom_fichier=fichier_pdf)
+        # print("=============MACHINES====================")
+        # print(liste_machines)
+        # print("=================COMPOSANTS=============")
+        # print(liste_composants)
+
+
 
     print("=================FIN DU PROGRAMME===========")

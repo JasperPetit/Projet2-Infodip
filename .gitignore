@@ -213,3 +213,5 @@ Mail DeepBrain.docx
 .p2venv/
 p2venv/
 resultat.json
+resultat/
+tessadata/
