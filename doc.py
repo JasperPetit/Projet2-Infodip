@@ -21,7 +21,7 @@ import ollama
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.datamodel.base_models import InputFormat
-
+import json 
 # Import des types d'éléments pour les reconnaître
 from docling_core.types.doc.document import TextItem, TableItem, PictureItem
 
@@ -122,6 +122,7 @@ def ChatOllama(texte_final):
         options={"temperature": 0}
     )
     print(response.message.content)
+    dict= json.load(response.message.content)
 
 
 
