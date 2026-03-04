@@ -1,45 +1,70 @@
-#ma venv c'est docenv
-# from docling.document_converter import DocumentConverter
 
-# def messi(source): 
-   
-#     converter = DocumentConverter()
-#     result = converter.convert(source)
-#     mark = result.document.export_to_markdown()
-
-#     with open('fichier_markdown.txt', 'w', encoding='utf-8') as f:
-#         f.write(mark)
-#         print("ok")
-
-
-# if __name__ == "__main__":
-#     fichier_pdf = "Mail TALC SI.docx" 
-#     messi(fichier_pdf)
-
-
-from pdf2image import convert_from_path
-import pytesseract
 import ollama
+from docling.document_converter import DocumentConverter, PdfFormatOption
+from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.datamodel.base_models import InputFormat
 
-def extraction_tesseract(fichier_pdf):
-    print(f"1. Découpage du PDF '{fichier_pdf}'...")
-    pages = convert_from_path(fichier_pdf)
-    texte_complet = ""
+# Import des types d'éléments pour les reconnaître
+from docling_core.types.doc.document import TextItem, TableItem, PictureItem
+import time
+import pytesseract
+import logic
+import json
 
-    print(f"2. Lecture par Tesseract ({len(pages)} pages)...")
-    for index, page_img in enumerate(pages):
-        print(f"-> Scan foudroyant de la page {index + 1}...")
+import pytesseract
+
+def extraction_sur_mesure(chemin_fichier):
+    print(f"\n--- Démembrement du document : {chemin_fichier} ---")
+    
+    # 1. Configuration : On force Docling à "découper" physiquement les images
+    options = PdfPipelineOptions()
+    options.generate_picture_images = True # Indispensable pour récupérer l'image PIL
+    
+    convertisseur = DocumentConverter(
+        format_options={
+            InputFormat.PDF: PdfFormatOption(pipeline_options=options)
+        }
+    )
+    
+    print("1. Scan de la structure par Docling...")
+    resultat = convertisseur.convert(chemin_fichier)
+    doc = resultat.document
+    texte_final = ""
+    
+    print("2. Parcours intelligent des éléments...")
+    # doc.iterate_items() lit le document de haut en bas, dans le bon ordre !
+    for item, level in doc.iterate_items():
         
-        # Le scan OCR pur et dur (langue configurée sur Français + Anglais)
-        texte = pytesseract.image_to_string(page_img, lang='fra+eng')
-        
-        texte_complet += f"\n\n=== PAGE {index + 1} ===\n{texte}\n"
-    return texte_complet
+        # CAS A : C'est du texte normal (paragraphes, titres...)
+        if isinstance(item, TextItem):
+            texte_final += f"{item.text}\n\n"
+            
+        # CAS B : C'est un tableau (on garde le beau format Markdown pour Qwen)
+        elif isinstance(item, TableItem):
+            texte_final += f"{item.export_to_markdown()}\n\n"
+            
+        # CAS C : C'est une image ! (On sort l'arme lourde : Tesseract)
+        elif isinstance(item, PictureItem):
+            
+            # On récupère l'image sous forme de variable (format PIL Image)
+            image_pil = item.get_image(doc)
+            
+            if image_pil is not None:
+                # Ton code Tesseract classique entre en action
+                texte_image = pytesseract.image_to_string(image_pil, lang='fra+eng')
+                
+                # On ajoute des balises pour aider Qwen à comprendre d'où ça vient
+                texte_final += f"{texte_image.strip()}"
+                
+    print(texte_final)
+    return texte_final
+
+
 
 
 def ChatOllama(texte_complet):
     response: ollama.ChatResponse = ollama.chat(
-        model="llama3.3:70b",
+        model="qwen2.5-coder:32b",
         messages=[
             {
                 'role': 'system', 
@@ -80,10 +105,63 @@ def ChatOllama(texte_complet):
         options={"temperature": 0}
     )
     print(response.message.content)
+    reponse_JSON = json.loads(response.message.content)
+    return reponse_JSON
+
+def conversion_machine(tableau_machine:list):
+    resultat = []
+    for machine in tableau_machine:
+        new_machine = logic.machine(machine)
+        resultat.append(new_machine)
+    return resultat
+
+def conversion_composant(dictionnaire:dict):
+    config_dict:dict = {
+        "Format": [],
+        "CPU": [],
+        "Memory": [],
+        "Audio component": [],
+        "GPU": [],
+        "Network": [],
+        "Out of band management": [],
+        "USB": [],
+        "OS": [],
+        "Storage": [],
+        "Noise": [],
+        "Warranty": [],
+        "License": [],
+        "Other": []
+    }
+
+    machines:list = dictionnaire.keys()
+    
+
 
 if __name__ == "__main__":
-    fichier_pdf = "VEGA-Banc-Besoin_Materiel_banc -A.pdf" 
-    txt = extraction_tesseract(fichier_pdf)
-    print(txt)
-    ChatOllama(txt)
+    choix = input("Voulez-vous faire une extraction sur mesure (1) ou utiliser le dernier JSON traité (2) ? ")
+    start = time.time()
+    if choix == "1" :
+        fichier_pdf = "CDC Arcelor mittal.pdf" 
+        txt = extraction_sur_mesure(fichier_pdf)
+        print(txt)
+        print("=================RESULTAT DE L'EXTRACTION===========")
+        endRead = time.time()
+        reponse_JSON = ChatOllama(txt)
+        endLLM = time.time()
+        with open("resultat.json", "w") as f:
+            json.dump(reponse_JSON, f, indent=4)
+        print(reponse_JSON)
+        print("=================PERFORMANCE===========")
+        print(f"Temps d'extraction : {endRead - start}")
+        print(f"Temps de traitement LLM : {endLLM - endRead}")
+        print(f"Temps total : {endLLM - start}")
+
+    if choix == "2" : 
+        print("=================LECTURE DU DERNIER JSON TRAITE===========")
+        with open("resultat.json", "r") as f:
+            precedent_JSON = json.load(f)
+        cles = precedent_JSON.keys()
+        print(cles)
+        print([str(precedent_JSON[elem] )+ "\n" for elem in cles])
+
     print("=================FIN DU PROGRAMME===========")
