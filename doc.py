@@ -3,8 +3,14 @@
 #Si vous voulez les modifier, il faut considerer que A=1,B=2,etc et que ligne 1=1, ligne=2=2,etc.
 COLONNE_DEBUT_MACHINE = 5
 LIGNE_DEBUT_MACHINE = 10
-COLONNE_DEBUT_MANDATORY = 2
-LIGNE_DEBUT_MANDATORY = 12
+COLONNE_DEBUT_CATEGORIE = 2
+COLONNE_DEBUT_MANDATORY = 3
+LIGNE_DEBUT_MANDATORY = 13
+
+LIGNE_TITRES_DEBUT = 12
+COLONNE_TITRES_DEBUT = 2
+
+
 
 
 import ollama
@@ -22,7 +28,10 @@ import json
 import pytesseract
 import openpyxl
 import os
+from openpyxl.styles import Border, Side, PatternFill
 
+BORDER = Border(left=Side(style='medium'), right=Side(style='medium'), top=Side(style='medium'), bottom=Side(style='medium'))
+FOND = PatternFill(start_color="D3D3D3",end_color="D3D3D3",fill_type = "solid")
 
 
 def extraction_sur_mesure(chemin_fichier):
@@ -166,6 +175,12 @@ def conversion_composant(dictionnaire:dict):
 def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
     wb = openpyxl.load_workbook("template.xlsx")
     ws = wb.active
+    for this_row in range(1, ws.max_row +1):
+        for col_original, col_destination in [(6, 6+ len(liste_machines)), (7, 7+ len(liste_machines))] :
+            value_to_move = ws.cell(this_row, col_original).value
+            ws.cell(this_row, col_destination).value = value_to_move
+            ws.cell(this_row, col_original).value = None
+        
     for indice_machine in range(len(liste_machines)):
 
         current_machine = liste_machines[indice_machine]
@@ -173,7 +188,26 @@ def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
         current_column = COLONNE_DEBUT_MACHINE + indice_machine
 
         ws.cell(row=current_row, column=current_column).value = current_machine.name
-    nom_coupe = nom_fichier.split('.')[0] 
+        ws.cell(row=current_row, column=current_column).border = BORDER        
+        ws.cell(row=current_row+1, column=current_column).border = BORDER
+    current_row = LIGNE_DEBUT_MANDATORY
+    for indice_categorie, categorie in enumerate(config_dict.keys()):
+        ws.cell(row=current_row, column=COLONNE_DEBUT_CATEGORIE).value = categorie
+
+        for composant in config_dict[categorie]:
+            print(composant)
+            ws.cell(row=current_row, column=COLONNE_DEBUT_MANDATORY).value = composant.name
+            current_row += 1
+
+    #Ces lignes permettent la mise en forme du tableau dans le fichier excel.
+    for row in ws.iter_rows(min_row=LIGNE_DEBUT_MANDATORY-1, max_col=ws.max_column,min_col=COLONNE_DEBUT_CATEGORIE, max_row=current_row):
+        for cell in row:
+            cell.border = BORDER
+    for row in ws.iter_rows(min_row=LIGNE_TITRES_DEBUT, max_row=LIGNE_TITRES_DEBUT, min_col=COLONNE_TITRES_DEBUT, max_col=ws.max_column):
+        for cell in row:
+            cell.fill = FOND
+    
+    nom_coupe:str = nom_fichier.split('.')[0] 
     #Changer l'extension du fichier ici ci l'extension de la template change
     wb.save(f"resultat/{nom_coupe}.xlsx")
 
