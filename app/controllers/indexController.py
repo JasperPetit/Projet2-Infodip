@@ -48,6 +48,9 @@ class IndexController:
     @app.route('/download', methods=['GET'])
     def download():
 
+        return redirect('/')
+
+
 
 
 
