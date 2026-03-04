@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 import os 
 
 UPLOAD_DIRECTORY = 'app/uploads/'
+
 ALLOWED_EXTENSIONS = set(['.pdf', '.docx', '.txt'])
 class IndexController:
 
@@ -26,12 +27,35 @@ class IndexController:
             file_path = os.path.join(UPLOAD_DIRECTORY, secure_filename(file.filename))
             file.save(file_path)
             text = doc.extraction_sur_mesure(file_path)
-            return doc.ChatOllama(text)
+            json_final = doc.ChatOllama(text)
+            matrice=doc.matrice_conformite(json_final, file_path)
+            matrice.save(UPLOAD_DIRECTORY)
+            os.remove(file_path)
+            
+
+           
+        
         else:
             direct_text = request.form.get('texte_manuel')
-            return doc.ChatOllama(direct_text)
+            json_final_txt = doc.ChatOllama(direct_text)
+            matrice_txt=doc.matrice_conformite(json_final_txt, None)
+            matrice_txt.save(UPLOAD_DIRECTORY)
+            os.remove(file_path)  
+        
 
         return redirect('/')
+   
+    @app.route('/download', methods=['GET'])
+    def download():
+
+        return redirect('/')
+
+
+
+
+
+
+
         
        
 
