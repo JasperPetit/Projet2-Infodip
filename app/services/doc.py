@@ -15,6 +15,7 @@ POSITION_QUESTION = (5,27)
 
 POURCENTAGE_SIMILARITE = 0.9
 
+CHEMIN_TEMPLATE = "app/static/template.xlsx"
 
 
 import ollama
@@ -26,7 +27,7 @@ from docling.datamodel.base_models import InputFormat
 from docling_core.types.doc.document import TextItem, TableItem, PictureItem
 import time
 import pytesseract
-import logic
+import app.services.logic as logic
 import json
 
 import pytesseract
@@ -196,7 +197,7 @@ def conversion_composant(dictionnaire:dict, liste_machines:list):
 
 
 def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
-    wb = openpyxl.load_workbook("template.xlsx")
+    wb = openpyxl.load_workbook(CHEMIN_TEMPLATE)
     ws = wb.active
     for this_row in range(1, ws.max_row +1):
         for col_original, col_destination in [(6, 6+ len(liste_machines)), (7, 7+ len(liste_machines))] :
@@ -241,6 +242,7 @@ def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
     #Changer l'extension du fichier ici ci l'extension de la template change
     wb.save(f"resultat/{nom_fichier}.xlsx")
     return f"resultat/{nom_fichier}.xlsx"
+    
 
 
 

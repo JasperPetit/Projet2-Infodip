@@ -54,7 +54,9 @@ class IndexController:
 
         return send_file(session['matrice'], as_attachment=True)
     
-    def 
+    def recup_nom():
+        excel = session['matrice']
+        return render_template('index2.html', excel = excel )
 
 
 
