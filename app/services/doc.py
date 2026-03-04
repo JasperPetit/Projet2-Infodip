@@ -1,4 +1,4 @@
-#VERSION = 4.3.1
+#VERSION = 4.3.2
 #Ces lignes sont des constantes qui definissent les positions de départ pour l'ajout des machines et des composant dans le fichier excel.
 #Si vous voulez les modifier, il faut considerer que A=1,B=2,etc et que ligne 1=1, ligne=2=2,etc.
 COLONNE_DEBUT_MACHINE = 5
@@ -237,51 +237,20 @@ def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
             cell.fill = FOND
     
 
-    nom_coupe:str = nom_fichier.split('.')[0] 
+
     #Changer l'extension du fichier ici ci l'extension de la template change
-    wb.save(f"resultat/{nom_coupe}.xlsx")
+    wb.save(f"resultat/{nom_fichier}.xlsx")
+    return f"resultat/{nom_fichier}.xlsx"
 
 
 
-if __name__ == "__main__":
-    choix = input("Voulez-vous faire une extraction sur mesure (1) ou utiliser le dernier JSON traité (2) ? ")
-    start = time.time()
-    fichier_pdf = "CDC Arcelor mittal.pdf" 
-
-    if choix == "1" :
-        txt = extraction_sur_mesure(fichier_pdf)
-        print(txt)
-        print("=================RESULTAT DE L'EXTRACTION===========")
-        endRead = time.time()
-        reponse_JSON = ChatOllama(txt)
-        endLLM = time.time()
-        with open("resultat.json", "w") as f:
-            json.dump(reponse_JSON, f, indent=4)
-        print(reponse_JSON)
-        print("=================PERFORMANCE===========")
-        print(f"Temps d'extraction : {endRead - start}")
-        print(f"Temps de traitement LLM : {endLLM - endRead}")
-        print(f"Temps total : {endLLM - start}")
-
-    if choix == "2" : 
-        print("=================LECTURE DU DERNIER JSON TRAITE===========")
-        with open("resultat.json", "r") as f:
-            precedent_JSON = json.load(f)
-        liste_machines = conversion_machine(precedent_JSON.keys())
-        liste_composants = conversion_composant(precedent_JSON,liste_machines)
-
-        insertion_excel(config_dict=liste_composants, liste_machines=liste_machines, nom_fichier=fichier_pdf)
-        # print("=============MACHINES====================")
-        # print(liste_machines)
-        # print("=================COMPOSANTS=============")
-        # print(liste_composants)
-
-    def matrice_conformite(Json, fichier_pdf):
-        liste_machines = conversion_machine(precedent_JSON.keys())
-        liste_composants = conversion_composant(precedent_JSON,liste_machines)
-        insertion_excel(config_dict=liste_composants, liste_machines=liste_machines, nom_fichier=fichier_pdf)
-        
+def matrice_conformite(resultat_JSON, fichier_txt):
 
 
+    liste_machines = conversion_machine(resultat_JSON.keys())       #Conversion du JSON en liste de machines de la classe machine (logic.py)
+    liste_composants = conversion_composant(dictionnaire=resultat_JSON, liste_machines=liste_machines)      
 
-    print("=================FIN DU PROGRAMME===========")
+    return insertion_excel(config_dict=liste_composants, liste_machines=liste_machines, nom_fichier=fichier_txt)      #Insertion des machines et des composants dans le fichier excel et sauvegarde du fichier excel final dans le dossier resultat
+    
+
+
