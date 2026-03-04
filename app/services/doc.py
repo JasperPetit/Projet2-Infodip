@@ -1,4 +1,4 @@
-
+#VERSION = 4.3.1
 #Ces lignes sont des constantes qui definissent les positions de départ pour l'ajout des machines et des composant dans le fichier excel.
 #Si vous voulez les modifier, il faut considerer que A=1,B=2,etc et que ligne 1=1, ligne=2=2,etc.
 COLONNE_DEBUT_MACHINE = 5
@@ -190,6 +190,7 @@ def conversion_composant(dictionnaire:dict, liste_machines:list):
                 if doublon != False:
                     doublon.ajouter_machine(machine)
                 else:
+                    new_composant.ajouter_machine(machine)
                     config_dict[current_categorie].append(new_composant)
     return config_dict
 
@@ -209,17 +210,22 @@ def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
         current_row = LIGNE_DEBUT_MACHINE
         current_column = COLONNE_DEBUT_MACHINE + indice_machine
 
-        ws.cell(row=current_row, column=current_column).value = current_machine.name
+        ws.cell(row=current_row, column=current_column).value = current_machine.name        #On ajoute le nom de la machine( grace a l'attribut d'objet 'name') au spreadsheet
         ws.cell(row=current_row, column=current_column).border = BORDER_MACHINE_HAUT        
         ws.cell(row=current_row+1, column=current_column).border = BORDER_MACHINE_BAS
+        liste_machines[indice_machine].ajouter_coordonnee(ligne=current_row, colonne=current_column)        #On sauvegarde la position de la case de la machine grace a la methode ajouter_coordonnee de la classe machine
 
     #Cette partie sert a ajouter les exigences au tableau
     current_row = LIGNE_DEBUT_MANDATORY
     for indice_categorie, categorie in enumerate(config_dict.keys()):
-        ws.cell(row=current_row, column=COLONNE_DEBUT_CATEGORIE).value = categorie
+        ws.cell(row=current_row, column=COLONNE_DEBUT_CATEGORIE).value = categorie      #On ajoute une seul fois le nom de la categorie au spreadsheet dans la colonne a gauche
 
         for composant in config_dict[categorie]:
-            ws.cell(row=current_row, column=COLONNE_DEBUT_MANDATORY).value = composant.name
+            ws.cell(row=current_row, column=COLONNE_DEBUT_MANDATORY).value = composant.name     #On ajoute le nom du composant dans la colonne des composants en utilisant l'attribut d'objet 'name' de la classe composant. La ligne est current_row, qui augmente a chaque exigence qu'on ajoute et la colonne est COLONNE_DEBUT_MANDATORY qui est la colonne des composants, elle nous bouge pas ce qui nous permet d'utiliser une constante.
+            print(composant.liste_machines)
+            for machine in composant.liste_machines:
+                colonne_machine = machine.colonne
+                ws.cell(row=current_row, column=colonne_machine).value = '1'
             current_row += 1
 
     #Ces lignes permettent la mise en forme du tableau dans le fichier excel.
@@ -230,6 +236,7 @@ def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
         for cell in row:
             cell.fill = FOND
     
+
     nom_coupe:str = nom_fichier.split('.')[0] 
     #Changer l'extension du fichier ici ci l'extension de la template change
     wb.save(f"resultat/{nom_coupe}.xlsx")
