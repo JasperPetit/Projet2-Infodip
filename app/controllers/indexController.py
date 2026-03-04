@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, request
 from app import app
 import json
-import doc  #c'est le doc.py 
+import app.services.doc as doc  #c'est le doc.py 
 from werkzeug.utils import secure_filename
 import os 
 
@@ -35,37 +35,3 @@ class IndexController:
         
        
 
-#SE RENSEIGNER ET TESTER LE CODE EN DESSOUS :
-
-
-#       ## uploading specs ##
-# UPLOAD_FOLDER = '/tmp/'
-# ALLOWED_EXTENSIONS = set(['deb'])
-
-# def allowed_file(filename):
-#     return '.' in filename and \
-#     filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
-# ## index page stuff ##
-# @app.route('/index', methods = ['GET', 'POST'])
-# def index():
-# ## kerberos username
-#     secuser = request.environ.get('REMOTE_USER')
-
-#     user = { 'nick': secuser }
-
-
-# ## file uploading stuff
-# if request.method == 'POST': 
-#     file = request.files['file']
-#     if file and allowed_file(file.filename):
-#         filename = secure_filename(file.filename)
-#         file.save(os.path.join(UPLOAD_FOLDER, filename))
-#         return redirect(url_for('/index',     
-#                         filename=filename))
-
-# ## main return
-# return render_template("index.html",
-#     user = user)
-
-        

@@ -26,7 +26,7 @@ from docling.datamodel.base_models import InputFormat
 from docling_core.types.doc.document import TextItem, TableItem, PictureItem
 import time
 import pytesseract
-import logic
+import app.services.logic as logic
 import json
 
 import pytesseract
