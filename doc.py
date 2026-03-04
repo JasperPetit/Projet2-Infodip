@@ -269,6 +269,12 @@ if __name__ == "__main__":
         # print("=================COMPOSANTS=============")
         # print(liste_composants)
 
+    def matrice_conformite(Json, fichier_pdf):
+        liste_machines = conversion_machine(precedent_JSON.keys())
+        liste_composants = conversion_composant(precedent_JSON,liste_machines)
+        insertion_excel(config_dict=liste_composants, liste_machines=liste_machines, nom_fichier=fichier_pdf)
+        
+
 
 
     print("=================FIN DU PROGRAMME===========")
