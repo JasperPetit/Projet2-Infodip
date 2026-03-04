@@ -10,6 +10,10 @@ LIGNE_DEBUT_MANDATORY = 13
 LIGNE_TITRES_DEBUT = 12
 COLONNE_TITRES_DEBUT = 2
 
+POSITION_JUSTIFICATION = (4,27)
+POSITION_QUESTION = (5,27)
+
+POURCENTAGE_SIMILARITE = 0.9
 
 
 
@@ -29,8 +33,16 @@ import pytesseract
 import openpyxl
 import os
 from openpyxl.styles import Border, Side, PatternFill
+from sentence_transformers import SentenceTransformer, util
+
+MODEL_LLM = "qwen2.5-coder:32b"
+MODEL_EMBEDDING_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
+MODEL_EMBEDDING = SentenceTransformer(MODEL_EMBEDDING_NAME)
 
 BORDER = Border(left=Side(style='medium'), right=Side(style='medium'), top=Side(style='medium'), bottom=Side(style='medium'))
+BORDER_MACHINE_HAUT = Border(left=Side(style='medium'), right=Side(style='medium'), top=Side(style='medium'),bottom=Side(style='thin'))
+BORDER_MACHINE_BAS = Border(left=Side(style='medium'), right=Side(style='medium'), bottom=Side(style='medium'),top=Side(style='thin'))
+
 FOND = PatternFill(start_color="D3D3D3",end_color="D3D3D3",fill_type = "solid")
 
 
@@ -131,9 +143,16 @@ def ChatOllama(texte_complet):
     return reponse_JSON
 
 
-#def check_doublon(dictionnaire_composant:dict, composant_ajoute:logic.composant):
-
-
+def check_doublon(dictionnaire_composant:dict, composant_ajoute:logic.composant):
+    for exigence_compare in dictionnaire_composant[composant_ajoute.categorie]:
+        if exigence_compare.compare(composant_ajoute):
+            return exigence_compare
+        embedding1 = MODEL_EMBEDDING.encode(exigence_compare.name)
+        embedding2 = MODEL_EMBEDDING.encode(composant_ajoute.name)
+        similarity = util.cos_sim(embedding1, embedding2)
+        if similarity > POURCENTAGE_SIMILARITE:
+            return exigence_compare
+    return False
 
 def conversion_machine(tableau_machine:list):
     resultat = []
@@ -142,7 +161,7 @@ def conversion_machine(tableau_machine:list):
         resultat.append(new_machine)
     return resultat
 
-def conversion_composant(dictionnaire:dict):
+def conversion_composant(dictionnaire:dict, liste_machines:list):
     config_dict:dict = {
         "Format": [],
         "CPU": [],
@@ -160,15 +179,18 @@ def conversion_composant(dictionnaire:dict):
         "Other": []
     }
 
-    liste_machines:list = dictionnaire.keys()
+    
     for machine in liste_machines:
-        categorie:list = dictionnaire[machine].keys()
+        categorie:list = dictionnaire[machine.name].keys()
         for current_categorie in categorie:
-            for current_composant in dictionnaire[machine][current_categorie]:
+            for current_composant in dictionnaire[machine.name][current_categorie]:
                 
                 new_composant = logic.composant(current_composant,current_categorie)
-#                check_doublon(new_composant,config_dict)
-                config_dict[current_categorie].append(new_composant)
+                doublon = check_doublon(config_dict,new_composant)
+                if doublon != False:
+                    doublon.ajouter_machine(machine)
+                else:
+                    config_dict[current_categorie].append(new_composant)
     return config_dict
 
 
@@ -180,7 +202,7 @@ def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
             value_to_move = ws.cell(this_row, col_original).value
             ws.cell(this_row, col_destination).value = value_to_move
             ws.cell(this_row, col_original).value = None
-        
+    #Cette partie sert a ajouter les machines au tableau
     for indice_machine in range(len(liste_machines)):
 
         current_machine = liste_machines[indice_machine]
@@ -188,14 +210,15 @@ def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
         current_column = COLONNE_DEBUT_MACHINE + indice_machine
 
         ws.cell(row=current_row, column=current_column).value = current_machine.name
-        ws.cell(row=current_row, column=current_column).border = BORDER        
-        ws.cell(row=current_row+1, column=current_column).border = BORDER
+        ws.cell(row=current_row, column=current_column).border = BORDER_MACHINE_HAUT        
+        ws.cell(row=current_row+1, column=current_column).border = BORDER_MACHINE_BAS
+
+    #Cette partie sert a ajouter les exigences au tableau
     current_row = LIGNE_DEBUT_MANDATORY
     for indice_categorie, categorie in enumerate(config_dict.keys()):
         ws.cell(row=current_row, column=COLONNE_DEBUT_CATEGORIE).value = categorie
 
         for composant in config_dict[categorie]:
-            print(composant)
             ws.cell(row=current_row, column=COLONNE_DEBUT_MANDATORY).value = composant.name
             current_row += 1
 
@@ -237,8 +260,9 @@ if __name__ == "__main__":
         print("=================LECTURE DU DERNIER JSON TRAITE===========")
         with open("resultat.json", "r") as f:
             precedent_JSON = json.load(f)
-        liste_composants = conversion_composant(precedent_JSON)
         liste_machines = conversion_machine(precedent_JSON.keys())
+        liste_composants = conversion_composant(precedent_JSON,liste_machines)
+
         insertion_excel(config_dict=liste_composants, liste_machines=liste_machines, nom_fichier=fichier_pdf)
         # print("=============MACHINES====================")
         # print(liste_machines)

@@ -4,3 +4,4 @@ pytesseract
 docling
 tesserocr
 flask
+sentence_transformers
