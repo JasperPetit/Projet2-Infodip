@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, request, send_file, session
+from flask import Flask, render_template, redirect, url_for, request, send_file, session
 from app import app
 import json
 import app.services.doc as doc  #c'est le doc.py 
@@ -8,15 +8,18 @@ import os
 UPLOAD_DIRECTORY = 'app/uploads/'
 
 ALLOWED_EXTENSIONS = set(['.pdf', '.docx', '.txt'])
-class IndexController:
 
 
-    @app.route('/')
-    def index():
-        return render_template('index2.html', methods = ['GET'])
+app.secret_key = 'Infodip-1986-v2'
 
-    @app.route('/upload', methods=['POST'])
-    def uploadAndAnalyze():
+@app.route('/')
+def index():
+    matrice_generee = session.get('matrice')
+    return render_template('index2.html', excel = matrice_generee)
+
+@app.route('/upload', methods=['POST'])
+def uploadAndAnalyze():
+        session.pop('matrice', None)
         file = request.files['document']
         
         
@@ -40,23 +43,26 @@ class IndexController:
         else:
             direct_text = request.form.get('texte_manuel')
             json_final_txt = doc.ChatOllama(direct_text)
-            matrice_txt=doc.matrice_conformite(json_final_txt, None)
-            os.remove(file_path)  
-        
+            session['matrice'] = doc.matrice_conformite(json_final_txt, None)
+            
 
         return redirect('/')
    
    
    
    
-    @app.route('/download', methods=['GET'])
-    def download():
+@app.route('/download', methods=['GET'])
+def download():
+        chemin_excel = session.get('matrice')
 
-        return send_file(session['matrice'], as_attachment=True)
+        if not chemin_excel:
+            return redirect('/')
+        
+        session.pop('matrice', None)
+
+        return send_file(chemin_excel, as_attachment=True)
     
-    def recup_nom():
-        excel = session['matrice']
-        return render_template('index2.html', excel = excel )
+
 
 
 

@@ -240,8 +240,10 @@ def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
 
 
     #Changer l'extension du fichier ici ci l'extension de la template change
-    wb.save(f"resultat/{nom_fichier}.xlsx")
-    return f"resultat/{nom_fichier}.xlsx"
+    # wb.save(f"resultat/{nom_fichier}.xlsx")
+    # return f"resultat/{nom_fichier}.xlsx"
+    wb.save(f'{nom_fichier}.xlsx')
+    return f'{nom_fichier}.xlsx'
     
 
 
