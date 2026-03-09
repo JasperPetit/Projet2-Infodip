@@ -18,6 +18,7 @@ POURCENTAGE_SIMILARITE = 0.9
 CHEMIN_TEMPLATE = "app/static/template.xlsx"
 
 
+
 import ollama
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.pipeline_options import PdfPipelineOptions
@@ -36,7 +37,7 @@ import os
 from openpyxl.styles import Border, Side, PatternFill
 from sentence_transformers import SentenceTransformer, util
 
-MODEL_LLM = "qwen2.5-coder:32b"
+MODEL_LLM = "phi4:14b"
 MODEL_EMBEDDING_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 MODEL_EMBEDDING = SentenceTransformer(MODEL_EMBEDDING_NAME)
 
@@ -99,7 +100,7 @@ def extraction_sur_mesure(chemin_fichier):
 
 def ChatOllama(texte_complet):
     response: ollama.ChatResponse = ollama.chat(
-        model="qwen2.5-coder:32b",
+        model=MODEL_LLM,
         messages=[
             {
                 'role': 'system', 
@@ -133,14 +134,16 @@ def ChatOllama(texte_complet):
                 }}
                 </template>
                 Si une machine a plusieurs composant du meme type alors tu ajoutera dans la liste des composant comme plusieurs instance. Voici un exemple pour la clé “Other” si il y avait 3 élements du texte Other1,Other2 et Other3 et qui correspondait a une seul et meme machine/ordinateur, mais cela s’applique pour toute les catégories : <example> “Other”:[“<Other1>“,“<Other2>“,“<Other3>“]</example>."
-                '''
+                 '''
             }
+
         ],
         format="json",
         options={"temperature": 0}
     )
     print(response.message.content)
     reponse_JSON = json.loads(response.message.content)
+    print(MODEL_LLM)
     return reponse_JSON
 
 

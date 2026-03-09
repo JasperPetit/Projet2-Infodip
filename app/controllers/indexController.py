@@ -80,13 +80,8 @@ def download():
         session.pop('matrice', None)
 
         return send_file(chemin_excel, as_attachment=True)
-
-# @app.after_request
-# def remove_file(response):
-#     chemin_excel = session.get('matrice')
-#     if chemin_excel:
-#         os.remove(chemin_excel)
-#     return response
+        
+ 
     
 
 

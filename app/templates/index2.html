@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Infodip - Matrice</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col font-sans">
 
@@ -57,6 +58,9 @@
     <div id="nomFichier" class="text-sm text-blue-600 font-medium mt-3 h-5"></div>
 
 </form>
+<div id="chargement" class="hidden flex-col items-center justify-center mt-8 w-full">
+    <lottie-player src="{{ url_for('static', filename='p2.json') }}" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay></lottie-player>
+</div>
     </main>
 
    {% if excel %}
@@ -78,6 +82,13 @@
             textarea.style.height = "auto";
             textarea.style.height = (textarea.scrollHeight) + "px";
         });
+
+    document.querySelector("form").addEventListener("submit", function() {
+    this.style.display = "none";
+  
+    document.getElementById("chargement").classList.remove("hidden");
+    document.getElementById("chargement").classList.add("flex");
+});
     </script>
 
     <style>
