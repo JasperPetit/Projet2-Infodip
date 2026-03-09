@@ -71,6 +71,7 @@
         document.getElementById("uploadFichier").addEventListener("change", function(e) {
             var nom = e.target.files[0] ? e.target.files[0].name : "";
             document.getElementById("nomFichier").textContent = nom ? " Fichier prêt : " + nom : "";
+            
         });
 
         const textarea = document.getElementById("texte_manuel")

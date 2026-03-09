@@ -18,6 +18,7 @@ POURCENTAGE_SIMILARITE = 0.9
 CHEMIN_TEMPLATE = "app/static/template.xlsx"
 
 
+
 import ollama
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.pipeline_options import PdfPipelineOptions
@@ -36,7 +37,7 @@ import os
 from openpyxl.styles import Border, Side, PatternFill
 from sentence_transformers import SentenceTransformer, util
 
-MODEL_LLM = "qwen2.5-coder:32b"
+MODEL_LLM = "llama3.3:70b"
 MODEL_EMBEDDING_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 MODEL_EMBEDDING = SentenceTransformer(MODEL_EMBEDDING_NAME)
 
@@ -98,8 +99,9 @@ def extraction_sur_mesure(chemin_fichier):
 
 
 def ChatOllama(texte_complet):
+
     response: ollama.ChatResponse = ollama.chat(
-        model="qwen2.5-coder:32b",
+        model=f"{MODEL_LLM}",
         messages=[
             {
                 'role': 'system', 
@@ -141,6 +143,7 @@ def ChatOllama(texte_complet):
     )
     print(response.message.content)
     reponse_JSON = json.loads(response.message.content)
+    print(f"modele de la reponse : {MODEL_LLM}")
     return reponse_JSON
 
 
@@ -199,6 +202,7 @@ def conversion_composant(dictionnaire:dict, liste_machines:list):
 def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
     wb = openpyxl.load_workbook(CHEMIN_TEMPLATE)
     ws = wb.active
+    ws.cell(row=1,column=1).value = MODEL_LLM
     for this_row in range(1, ws.max_row +1):
         for col_original, col_destination in [(6, 6+ len(liste_machines)), (7, 7+ len(liste_machines))] :
             value_to_move = ws.cell(this_row, col_original).value
