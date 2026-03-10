@@ -4,6 +4,7 @@ import json
 import app.services.doc as doc  #c'est le doc.py 
 from werkzeug.utils import secure_filename
 import os 
+import time
 
 # UPLOAD_DIRECTORY = 'app/uploads/'
 
@@ -45,11 +46,17 @@ def uploadAndAnalyze():
             
             file_path = os.path.join(UPLOAD_DIRECTORY, secure_filename(file.filename))
             file.save(file_path)
+
+            start_time = time.time()
             text = doc.extraction_sur_mesure(file_path)
             json_final = doc.ChatOllama(text)
-
             chemin_propre = os.path.splitext(file_path)[0]
+            
+            
             session['matrice'] = doc.matrice_conformite(json_final, chemin_propre)
+            
+            end_time = time.time()
+            print(f"Temps d'exécution de matrice_conformite : {end_time - start_time} secondes")
            
            
             #session['matrice'] = doc.matrice_conformite(json_final, file_path)
