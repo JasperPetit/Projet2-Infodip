@@ -62,7 +62,9 @@ def uploadAndAnalyze():
         else:
             direct_text = request.form.get('texte_manuel')
             json_final_txt = doc.ChatOllama(direct_text)
-            session['matrice'] = doc.matrice_conformite(json_final_txt, None)
+            file_path = os.path.join(UPLOAD_DIRECTORY, 'texte_manuel.txt')
+            print(file_path)
+            session['matrice'] = doc.matrice_conformite(json_final_txt, file_path)
             
 
         return redirect(url_for('index', actualiser_upload=True))
@@ -80,13 +82,8 @@ def download():
         session.pop('matrice', None)
 
         return send_file(chemin_excel, as_attachment=True)
-
-# @app.after_request
-# def remove_file(response):
-#     chemin_excel = session.get('matrice')
-#     if chemin_excel:
-#         os.remove(chemin_excel)
-#     return response
+        
+ 
     
 
 

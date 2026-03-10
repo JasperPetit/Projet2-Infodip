@@ -210,9 +210,17 @@ __marimo__/
 *.pdf
 *.docx
 Mail DeepBrain.docx
-.p2venv/
-p2venv/
+
+
 resultat.json
 resultat/
+<<<<<<< HEAD
 tessadata/
 uploads/
+=======
+tessadata/tailwindcss-linux-arm64
+/uploads/
+app/uploads
+
+p2venv/
+>>>>>>> test

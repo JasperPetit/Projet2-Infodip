@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Infodip - Matrice</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col font-sans">
 
@@ -36,14 +37,14 @@
         
         <form action="/upload" method="POST" enctype="multipart/form-data" class="w-full flex flex-col items-center">
             
-    <div class="flex items-center min-h-[56px] w-full max-w-2xl text-sm text-gray-500 bg-white border border-gray-300 rounded-lg shadow-sm focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all py-2">
+    <div id ="dropzone" class="flex items-center min-h-[56px] w-full max-w-2xl text-sm text-gray-500 bg-white border border-gray-300 rounded-lg shadow-sm focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all py-2">
         
         <label for="uploadFichier" class="h-full px-4 flex items-center justify-center cursor-pointer hover:bg-gray-50 rounded-l-lg transition-colors" title="Joindre un document">
             <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M11.918 18.4166H14.0846V14.0833H18.418V11.9166H14.0846V7.58329H11.918V11.9166H7.58464V14.0833H11.918V18.4166ZM13.0013 23.8333C11.5027 23.8333 10.0944 23.5534 8.7763 22.9937C7.45825 22.4159 6.31172 21.6395 5.33672 20.6645C4.36172 19.6895 3.58533 18.543 3.00755 17.225C2.44783 15.9069 2.16797 14.4986 2.16797 13C2.16797 11.5013 2.44783 10.093 3.00755 8.77496C3.58533 7.4569 4.36172 6.31037 5.33672 5.33538C6.31172 4.36037 7.45825 3.59301 8.7763 3.03329C10.0944 2.45551 11.5027 2.16663 13.0013 2.16663C14.4999 2.16663 15.9082 2.45551 17.2263 3.03329C18.5444 3.59301 19.6909 4.36037 20.6659 5.33538C21.6409 6.31037 22.4082 7.4569 22.968 8.77496C23.5457 10.093 23.8346 11.5013 23.8346 13C23.8346 14.4986 23.5457 15.9069 22.968 17.225C22.4082 18.543 21.6409 19.6895 20.6659 20.6645C19.6909 21.6395 18.5444 22.4159 17.2263 22.9937C15.9082 23.5534 14.4999 23.8333 13.0013 23.8333ZM13.0013 21.6666C15.4207 21.6666 17.4701 20.827 19.1492 19.1479C20.8284 17.4687 21.668 15.4194 21.668 13C21.668 10.5805 20.8284 8.53121 19.1492 6.85204C17.4701 5.17288 15.4207 4.33329 13.0013 4.33329C10.5819 4.33329 8.53255 5.17288 6.85339 6.85204C5.17422 8.53121 4.33464 10.5805 4.33464 13C4.33464 15.4194 5.17422 17.4687 6.85339 19.1479C8.53255 20.827 10.5819 21.6666 13.0013 21.6666Z" fill="#6B7280" fill-opacity="0.8"/>
             </svg>
         </label>
-        <input type="file" id="uploadFichier" name="document" class="hidden" accept=".pdf,.docx">
+        <input type="file" id="uploadFichier" name="document" class="hidden">
 
         <textarea class="outline-none bg-transparent h-full w-full px-2 text-gray-700 placeholder-gray-400 resize-none overflow-y-auto" rows="1" name="texte_manuel" id="texte_manuel" placeholder="Posez votre question ou joignez un cahier des charges..."></textarea>
         
@@ -57,6 +58,9 @@
     <div id="nomFichier" class="text-sm text-blue-600 font-medium mt-3 h-5"></div>
 
 </form>
+<div id="chargement" class="hidden flex-col items-center justify-center mt-8 w-full">
+    <lottie-player src="{{ url_for('static', filename='p2.json') }}" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay></lottie-player>
+</div>
     </main>
 
    {% if excel %}
@@ -68,17 +72,78 @@
    {% endif %}
 
     <script>
+
+        // Affiche le nom du fichier sélectionné
+        
         document.getElementById("uploadFichier").addEventListener("change", function(e) {
             var nom = e.target.files[0] ? e.target.files[0].name : "";
             document.getElementById("nomFichier").textContent = nom ? " Fichier prêt : " + nom : "";
             
         });
-
+        
+        // Ajuste la hauteur du textarea en fonction de son contenu
+        
         const textarea = document.getElementById("texte_manuel")
         textarea.addEventListener("input", function() {
             textarea.style.height = "auto";
             textarea.style.height = (textarea.scrollHeight) + "px";
         });
+
+
+    document.querySelector("form").addEventListener("submit", function() {
+    this.style.display = "none";
+  
+    document.getElementById("chargement").classList.remove("hidden");
+    document.getElementById("chargement").classList.add("flex");
+
+});
+
+    const dropZone = document.getElementById("dropzone");
+    const inputFichier = document.getElementById("uploadFichier"); 
+
+
+dropZone.addEventListener("dragover", function(e) {
+    e.preventDefault();
+   
+});
+
+dropZone.addEventListener("dragenter", function(e) {
+    dropZone.classList.add("border-blue-400")
+    e.preventDefault();
+});
+
+dropZone.addEventListener("dragleave", function(e) {
+   
+    if (dropZone.contains(e.relatedTarget)) {
+        return; 
+    }
+    dropZone.classList.remove("border-blue-400");
+    e.preventDefault();
+});
+
+
+dropZone.addEventListener("drop", function(e) {
+    e.preventDefault(); 
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0){
+        inputFichier.files = e.dataTransfer.files;
+        var nom = e.dataTransfer.files[0].name;
+        document.getElementById("nomFichier").textContent = " Fichier prêt : " + nom;
+        dropZone.classList.remove("border-blue-400")
+    }
+    else {
+        alert("Veuillez déposer un fichier valide.");
+    }
+
+    
+
+   
+    
+    
+    
+});
+        
+
+
     </script>
 
     <style>
