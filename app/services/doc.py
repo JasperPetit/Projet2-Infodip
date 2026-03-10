@@ -37,7 +37,7 @@ import os
 from openpyxl.styles import Border, Side, PatternFill
 from sentence_transformers import SentenceTransformer, util
 
-MODEL_LLM = "llama3.3:70b"
+MODEL_LLM = "qwen2.5-coder:32b"
 MODEL_EMBEDDING_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 MODEL_EMBEDDING = SentenceTransformer(MODEL_EMBEDDING_NAME)
 
@@ -68,28 +68,27 @@ def extraction_sur_mesure(chemin_fichier):
     texte_final = ""
     
     print("2. Parcours intelligent des éléments...")
-    # doc.iterate_items() lit le document de haut en bas, dans le bon ordre !
+    # doc.iterate_items() lit le document de haut en bas, dans le bon ordre 
     for item, level in doc.iterate_items():
         
-        # CAS A : C'est du texte normal (paragraphes, titres...)
+        # CAS A : C'est du texte normal
         if isinstance(item, TextItem):
             texte_final += f"{item.text}\n\n"
             
-        # CAS B : C'est un tableau (on garde le beau format Markdown pour Qwen)
+        # CAS B : C'est un tableau et on garde le format markdown 
         elif isinstance(item, TableItem):
             texte_final += f"{item.export_to_markdown()}\n\n"
             
-        # CAS C : C'est une image ! (On sort l'arme lourde : Tesseract)
+        # CAS C : C'est une image et on utlise Tessetact 
         elif isinstance(item, PictureItem):
             
             # On récupère l'image sous forme de variable (format PIL Image)
             image_pil = item.get_image(doc)
             
             if image_pil is not None:
-                # Ton code Tesseract classique entre en action
                 texte_image = pytesseract.image_to_string(image_pil, lang='fra+eng')
                 
-                # On ajoute des balises pour aider Qwen à comprendre d'où ça vient
+                # On ajoute des balises pour aider le LLM à comprendre d'où ça vient
                 texte_final += f"{texte_image.strip()}"
                 
     print(texte_final)
