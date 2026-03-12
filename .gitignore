@@ -214,13 +214,8 @@ Mail DeepBrain.docx
 
 resultat.json
 resultat/
-<<<<<<< HEAD
-tessadata/
-uploads/
-=======
 tessadata/tailwindcss-linux-arm64
 /uploads/
 app/uploads
 
 p2venv/
->>>>>>> test

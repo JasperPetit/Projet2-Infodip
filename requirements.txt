@@ -5,3 +5,4 @@ docling
 tesserocr
 flask
 sentence_transformers
+gunicorn
