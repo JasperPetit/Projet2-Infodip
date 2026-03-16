@@ -13,7 +13,7 @@ COLONNE_TITRES_DEBUT = 2
 POSITION_JUSTIFICATION = (4,27)
 POSITION_QUESTION = (5,27)
 
-POURCENTAGE_SIMILARITE = 0.9
+POURCENTAGE_SIMILARITE = 0.95
 
 CHEMIN_TEMPLATE = "app/static/template.xlsx"
 
@@ -30,14 +30,17 @@ import time
 import pytesseract
 import app.services.logic as logic
 import json
-
+from ollama import Client
 import pytesseract
 import openpyxl
 import os
 from openpyxl.styles import Border, Side, PatternFill
 from sentence_transformers import SentenceTransformer, util
 
-MODEL_LLM = "qwen2.5-coder:32b"
+ollama_host = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
+client = Client(host=ollama_host)
+
+MODEL_LLM = "llama3.3:70b"
 MODEL_EMBEDDING_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 MODEL_EMBEDDING = SentenceTransformer(MODEL_EMBEDDING_NAME)
 
@@ -98,41 +101,113 @@ def extraction_sur_mesure(chemin_fichier):
 
 
 def ChatOllama(texte_complet):
+
+    # response: ollama.ChatResponse = ollama.chat(
+    #     model=MODEL_LLM,
+    #     messages=[
+    #         {
+    #             'role': 'system', 
+    #             'content': 'Tu es une IA experte chez INFODIP, une société française qui reçoit des commandes d’ordinateurs/PC qu’elle doit mettre en rack ou en baie puis les fournir à ses clients. Tu reçois des cahiers des charges et des documents contenant des exigences et ton rôle est de les analyser afin d\'en extraire la liste des ordinateurs décrite et de fournir un résultat en JSON sous la forme d’une liste de machines. Tu n’inventes aucune information et n’ajoutes rien qui n’est pas écrit dans les documents. Tu ne changes pas la manière dont sont écrites les informations, reprends uniquement ce qui est dans le document. Tu ajoutes dans le JSON seulement les PC qui sont commandés, pas ceux déjà présents chez le client, et seulement les machines d\'un type correspondant aux types suivants : ["workstation","SAN","laptop","pc", "NAS", "serveurs"].'
+    #         },
+    #         {'role':"user",
+    #          'content': f"""
+    #             Ce document est un cahier des charges. Dans celui-ci est décrite une/plusieurs machine(s) informatique(s)/ordinateur(s) que l’entreprise voudrait commander à Infodip.
+    #             Je voudrais que tu récupères dans ce document la liste de noms de toutes les machines qui sont commandées.
+    #             Tu me répondras sous la forme d’une liste JSON stricte contenant uniquement les noms des differentes machines sans autre parametre ou attribut, juste le nom, je ne veux PAS D'AUTRE TEXTE OU EXPLICATION QUE LE JSON. 
+
+    #             Voici le document : {texte_complet}
+    #          """
+    #          }
+    #     ],
+    #     format="json",
+    #     options={"temperature": 0}
+    # )
+    # liste_machines = json.loads(response.message.content)
+    # print("======================================LISTE DES MACHINES :======================================")
+    # print(f"{liste_machines}")
+    # JSON_COMPLET = {}
+    # for machine in liste_machines:
+    #     response_machine: ollama.ChatResponse = ollama.chat(
+    #         model=MODEL_LLM,
+    #         messages=[
+    #             {
+    #                 'role': 'system',
+    #                 'content': 'Tu es une IA experte chez INFODIP, une société française qui reçoit des commandes d’ordinateurs/PC qu’elle doit mettre en rack ou en baie puis les fournir à ses clients. Tu reçois des cahiers des charges et des documents contenant des exigences et ton rôle est de les analyser afin d\'en extraire la liste des ordinateurs décrite et de fournir un résultat en JSON sous la forme d’une liste de machines. Tu n’inventes aucune information et n’ajoutes rien qui n’est pas écrit dans les documents. Tu ne changes pas la manière dont sont écrites les informations, reprends uniquement ce qui est dans le document. Tu ajoutes dans le JSON seulement les PC qui sont commandés, pas ceux déjà présents chez le client, et seulement les machines d\'un type correspondant aux types suivants : ["workstation","SAN","laptop","pc", "NAS", "serveurs"].'
+    #             },
+    #             {
+    #                 "role": "user",
+    #                 "content": f"""
+    #                 Je veux que tu me donnes la configuration complète de la machine {machine} en reprenant uniquement les éléments écrits dans le document. 
+    #                 Tu me répondras sous la forme d’un JSON strict uniquement, je ne veux PAS D'AUTRE TEXTE OU EXPLICATION QUE LE JSON. 
+    #                 Tu interpréteras tout seul la catégorie en choisissant celle qui te paraît la plus pertinente pour chaque exigence, en faisant attention à les ajouter à une seule catégorie. 
+
+    #                 <template>
+    #                 {{
+    #                 "Format":["<format demandé>"],
+    #                 "CPU":["<CPU demandé>"],
+    #                 "Memory":["<Memory demandé>"],
+    #                 "Audio component":["<Audio component demandé>"],
+    #                 "GPU":["<GPU demandé>"],
+    #                 "Network":["<Network demandé>"],
+    #                 "Out of band management":["<Out of band management>"],
+    #                 "USB":["<USB>"],
+    #                 "OS":["<OS>"],
+    #                 "Storage":["<Storage>"],
+    #                 "Noise":["<Noise>"],
+    #                 "Warranty":["<Warranty>"],
+    #                 "License":["<License>"],
+    #                 "Other":["<Other>"]
+    #                 }}
+    #                 </template>
+    #                 Si une machine a plusieurs composants du même type, alors tu les ajouteras dans la liste des composants comme plusieurs instances. Voici un exemple pour la clé "Other" s'il y avait 3 éléments du texte Other1, Other2 et Other3 qui correspondaient à une seule et même machine/ordinateur, mais cela s’applique pour toutes les catégories : <example> "Other":["<Other1>", "<Other2>", "<Other3>"]</example>."
+
+    #                 Voici le document : {texte_complet}
+    #                  """
+    #             }
+    #         ]
+    #     )
+
+    #     reponse_JSON = json.loads(response_machine.message.content)
+    #     JSON_COMPLET[machine] = reponse_JSON
+    # print("======================================JSON COMPLET :======================================")
+    # print(f"{JSON_COMPLET}")
+
+
     response: ollama.ChatResponse = ollama.chat(
         model=MODEL_LLM,
         messages=[
             {
                 'role': 'system', 
-                'content': 'Tu est une IA experte chez INFODIP une societe francaise qui récoit des commandes d’ordinateurs/pc qu’elle doit mettre en rack ou baie puis les fournir a ses clients. Tu recevoie des cahier des charges et documents contenant des exigences et ton role est de les analyser afin de ressortir la liste des ordinateur décrite et de ressortir un résultat en JSON sous la forme d’une liste de machines. Tu n’invente aucune informations et n’ajoute rien qui n’est pas écrit sur les documents. Tu ne change pas la maniere dont sont écrite les informations, reprend ce qui est dans le document uniquement. Tu ajout dans le JSON seulement les pc qui sont commandés, pas ceux déja présent chez le client, et seulement les machine dun type correspondant au types suiavnts: ["pc","NAS","serveurs"]'
+                'content': 'Tu es une IA experte chez INFODIP, une société française qui reçoit des commandes d’ordinateurs/PC qu’elle doit mettre en rack ou en baie puis les fournir à ses clients. Tu reçois des cahiers des charges et des documents contenant des exigences et ton rôle est de les analyser afin d\'en extraire la liste des ordinateurs décrite et de fournir un résultat en JSON sous la forme d’une liste de machines. Tu n’inventes aucune information et n’ajoutes rien qui n’est pas écrit dans les documents. Tu ne changes pas la manière dont sont écrites les informations, reprends uniquement ce qui est dans le document. Tu ajoutes dans le JSON seulement les PC qui sont commandés, pas ceux déjà présents chez le client, et seulement les machines d\'un type correspondant aux types suivants : ["workstation","SAN","laptop","pc", "NAS", "serveurs"].'
             },
             {   
                 "role": "user", 
-             "content": f'''Ce document est un cahier des charges. Dans celui-ci est décrit une/plusieurs machine informatique/ordinateur que l’entreprise voudrais commander a Infodip. Je voudrais que tu réccupere dans ce document la liste de toutes les machines qui sont commander. 
-                Tu me repondera sous une forme d’une liste JSON strict uniquement, je ne veux PAS D4AUTRE TEXTE OU EXPLICATION QUE JE JSON. Si 2 pc on exactement la meme configuration a un composant de difference alors tu les traitera comme 2 machine disctincte. Lorsqu’un element est en quantité multiple tu lu mettera “yx” en préfixe ou y est ka quantité et x represente le symbole fois. 
-                Tu interprettera tout seul la catégorie en choisissant celle qui te parait la plus pertinente de chaque exigence en faisant attention a les ajouter a une seul catégorie. 
+             "content": f'''Ce document est un cahier des charges. Dans celui-ci est décrite une/plusieurs machine(s) informatique(s)/ordinateur(s) que l’entreprise voudrait commander à Infodip. Je voudrais que tu récupères dans ce document la liste de toutes les machines qui sont commandées. 
+                Tu me répondras sous la forme d’une liste JSON stricte uniquement, je ne veux PAS D'AUTRE TEXTE OU EXPLICATION QUE LE JSON. Si 2 PC ont exactement la même configuration à un composant de différence près, alors tu les traiteras comme 2 machines distinctes. Lorsqu’un élément est en quantité multiple, tu lui mettras “yx” en préfixe où y est la quantité et x représente le symbole fois. 
+                Tu interpréteras tout seul la catégorie en choisissant celle qui te paraît la plus pertinente pour chaque exigence, en faisant attention à les ajouter à une seule catégorie. 
                 Voici le texte : {texte_complet}
-                Pour chaque machine que tu trouvera tu l’ajoutera au JSON avec le format suivant le texte entre chevron est un exemple de valeur, ce n’est pas le texte que dtu doit mettre dans le JSON final :
+                Pour chaque machine que tu trouveras, tu l’ajouteras au JSON avec le format suivant. Le texte entre chevrons est un exemple de valeur, ce n’est pas le texte que tu dois mettre dans le JSON final :
                 <template>
                 {{
-                <nom d’une machine>:{{
-                “Format”":[“<format demandé>”],
-                “CPU”:[“<CPU demandé>”],
-                “Memory”:[<Memory demandé>],
-                “Audio component”:[<Audio component demandé>],
-                “GPU”:[“<GPU demandé>”],
-                “Network”:[“<Network demandé>”],
-                “Out of band management”:[“<Out of band management>”],
-                “USB”:[“<USB>“],
-                “OS”:[“<OS>”],
-                “Storage”:[“<Storage>“],
-                “Noise”:[“<Noise>“],
-                “Warranty”:[“<Warranty>“],
-                “License”:[“<License>“],
-                “Other”:[“<Other>“]
+                "<nom d’une machine>":{{
+                "Format":["<format demandé>"],
+                "CPU":["<CPU demandé>"],
+                "Memory":["<Memory demandé>"],
+                "Audio component":["<Audio component demandé>"],
+                "GPU":["<GPU demandé>"],
+                "Network":["<Network demandé>"],
+                "Out of band management":["<Out of band management>"],
+                "USB":["<USB>"],
+                "OS":["<OS>"],
+                "Storage":["<Storage>"],
+                "Noise":["<Noise>"],
+                "Warranty":["<Warranty>"],
+                "License":["<License>"],
+                "Other":["<Other>"]
                 }}
                 }}
                 </template>
-                Si une machine a plusieurs composant du meme type alors tu ajoutera dans la liste des composant comme plusieurs instance. Voici un exemple pour la clé “Other” si il y avait 3 élements du texte Other1,Other2 et Other3 et qui correspondait a une seul et meme machine/ordinateur, mais cela s’applique pour toute les catégories : <example> “Other”:[“<Other1>“,“<Other2>“,“<Other3>“]</example>."
+                Si une machine a plusieurs composants du même type, alors tu les ajouteras dans la liste des composants comme plusieurs instances. Voici un exemple pour la clé "Other" s'il y avait 3 éléments du texte Other1, Other2 et Other3 qui correspondaient à une seule et même machine/ordinateur, mais cela s’applique pour toutes les catégories : <example> "Other":["<Other1>", "<Other2>", "<Other3>"]</example>."
                  '''
             }
 
@@ -140,20 +215,23 @@ def ChatOllama(texte_complet):
         format="json",
         options={"temperature": 0}
     )
-    print(response.message.content)
     reponse_JSON = json.loads(response.message.content)
-    print(MODEL_LLM)
+
+    
+
     return reponse_JSON
 
 
 def check_doublon(dictionnaire_composant:dict, composant_ajoute:logic.composant):
     for exigence_compare in dictionnaire_composant[composant_ajoute.categorie]:
         if exigence_compare.compare(composant_ajoute):
+            print(f"ON A DETECTE UN DOUBLON ENTRE {exigence_compare.name} ET {composant_ajoute.name}")
             return exigence_compare
         embedding1 = MODEL_EMBEDDING.encode(exigence_compare.name)
         embedding2 = MODEL_EMBEDDING.encode(composant_ajoute.name)
         similarity = util.cos_sim(embedding1, embedding2)
         if similarity > POURCENTAGE_SIMILARITE:
+            print(f"ON A DETECTE UN DOUBLON ENTRE {exigence_compare.name} ET {composant_ajoute.name}")
             return exigence_compare
     return False
 
@@ -201,6 +279,7 @@ def conversion_composant(dictionnaire:dict, liste_machines:list):
 def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
     wb = openpyxl.load_workbook(CHEMIN_TEMPLATE)
     ws = wb.active
+    ws.cell(row=1,column=1).value = MODEL_LLM
     for this_row in range(1, ws.max_row +1):
         for col_original, col_destination in [(6, 6+ len(liste_machines)), (7, 7+ len(liste_machines))] :
             value_to_move = ws.cell(this_row, col_original).value

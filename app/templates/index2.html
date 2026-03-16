@@ -78,6 +78,7 @@
         document.getElementById("uploadFichier").addEventListener("change", function(e) {
             var nom = e.target.files[0] ? e.target.files[0].name : "";
             document.getElementById("nomFichier").textContent = nom ? " Fichier prêt : " + nom : "";
+            
         });
         
         // Ajuste la hauteur du textarea en fonction de son contenu

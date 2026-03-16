@@ -5,6 +5,7 @@ import app.services.doc as doc  #c'est le doc.py
 from werkzeug.utils import secure_filename
 import os 
 import time
+from dotenv import load_dotenv
 
 # UPLOAD_DIRECTORY = 'app/uploads/'
 
@@ -19,9 +20,9 @@ UPLOAD_DIRECTORY = os.path.join(DOSSIER_APP, 'uploads')
 
 os.makedirs(UPLOAD_DIRECTORY, exist_ok=True)
 
+load_dotenv()
 
-
-app.secret_key = 'Infodip-1986-v2'
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 @app.route('/')
 def index():
