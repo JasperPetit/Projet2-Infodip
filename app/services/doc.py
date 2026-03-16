@@ -30,12 +30,15 @@ import time
 import pytesseract
 import app.services.logic as logic
 import json
-
+from ollama import Client
 import pytesseract
 import openpyxl
 import os
 from openpyxl.styles import Border, Side, PatternFill
 from sentence_transformers import SentenceTransformer, util
+
+ollama_host = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
+client = Client(host=ollama_host)
 
 MODEL_LLM = "llama3.3:70b"
 MODEL_EMBEDDING_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
