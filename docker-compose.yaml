@@ -6,8 +6,7 @@ services:
       - "11434:11434"
     volumes:
       - ollama_storage:/root/.ollama
-
-    shm_size: "64gb"
+    shm_size: "64gb"   
 
     restart: always
     environment:
@@ -35,5 +34,9 @@ services:
     environment:
       - OLLAMA_HOST=http://ollama:11434 
 
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+
 volumes: 
   ollama_storage:
+  huggingface_cache:

@@ -6,6 +6,7 @@
     <title>Infodip - Matrice</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col font-sans">
 
@@ -70,81 +71,59 @@
         </a>
     </div>
    {% endif %}
+<span hx-get="/status" hx-trigger="every 1s" class="inline-flex items-center rounded-md bg-red-400/10 px-2 py-1 text-xs font-medium text-red-400 inset-ring inset-ring-red-400/20">{{status}}</span>
 
-    <script>
-
-        // Affiche le nom du fichier sélectionné
-        
-        document.getElementById("uploadFichier").addEventListener("change", function(e) {
-            var nom = e.target.files[0] ? e.target.files[0].name : "";
-            document.getElementById("nomFichier").textContent = nom ? " Fichier prêt : " + nom : "";
-            
-        });
-        
-        // Ajuste la hauteur du textarea en fonction de son contenu
-        
-        const textarea = document.getElementById("texte_manuel")
-        textarea.addEventListener("input", function() {
-            textarea.style.height = "auto";
-            textarea.style.height = (textarea.scrollHeight) + "px";
-        });
+<script>
+       // Affiche le nom du fichier sélectionné
+       document.getElementById("uploadFichier").addEventListener("change", function(e) {
+           var nom = e.target.files[0] ? e.target.files[0].name : "";
+           document.getElementById("nomFichier").textContent = nom ? " Fichier prêt : " + nom : "";
+       });
+      
+       // Ajuste la hauteur du textarea en fonction de son contenu
+       const textarea = document.getElementById("texte_manuel")
+       textarea.addEventListener("input", function() {
+           textarea.style.height = "auto";
+           textarea.style.height = (textarea.scrollHeight) + "px";
+       });
 
 
-    document.querySelector("form").addEventListener("submit", function() {
-    this.style.display = "none";
-  
-    document.getElementById("chargement").classList.remove("hidden");
-    document.getElementById("chargement").classList.add("flex");
-
-});
-
-    const dropZone = document.getElementById("dropzone");
-    const inputFichier = document.getElementById("uploadFichier"); 
+       // Gestion du Drag & Drop
+       const dropZone = document.getElementById("dropzone");
+       const inputFichier = document.getElementById("uploadFichier");
 
 
-dropZone.addEventListener("dragover", function(e) {
-    e.preventDefault();
-   
-});
-
-dropZone.addEventListener("dragenter", function(e) {
-    dropZone.classList.add("border-blue-400")
-    e.preventDefault();
-});
-
-dropZone.addEventListener("dragleave", function(e) {
-   
-    if (dropZone.contains(e.relatedTarget)) {
-        return; 
-    }
-    dropZone.classList.remove("border-blue-400");
-    e.preventDefault();
-});
+       dropZone.addEventListener("dragover", function(e) {
+           e.preventDefault();
+       });
 
 
-dropZone.addEventListener("drop", function(e) {
-    e.preventDefault(); 
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0){
-        inputFichier.files = e.dataTransfer.files;
-        var nom = e.dataTransfer.files[0].name;
-        document.getElementById("nomFichier").textContent = " Fichier prêt : " + nom;
-        dropZone.classList.remove("border-blue-400")
-    }
-    else {
-        alert("Veuillez déposer un fichier valide.");
-    }
-
-    
-
-   
-    
-    
-    
-});
-        
+       dropZone.addEventListener("dragenter", function(e) {
+           dropZone.classList.add("border-blue-400");
+           e.preventDefault();
+       });
 
 
-    </script>
+       dropZone.addEventListener("dragleave", function(e) {
+           if (dropZone.contains(e.relatedTarget)) { return; }
+           dropZone.classList.remove("border-blue-400");
+           e.preventDefault();
+       });
+
+
+       dropZone.addEventListener("drop", function(e) {
+           e.preventDefault();
+           if (e.dataTransfer.files && e.dataTransfer.files.length > 0){
+               inputFichier.files = e.dataTransfer.files;
+               var nom = e.dataTransfer.files[0].name;
+               document.getElementById("nomFichier").textContent = " Fichier prêt : " + nom;
+               dropZone.classList.remove("border-blue-400");
+           } else {
+               alert("Veuillez déposer un fichier valide.");
+           }
+       });
+   </script>
+
 
     <style>
         textarea{
