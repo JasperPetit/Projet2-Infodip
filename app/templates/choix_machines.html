@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration de l'Analyse Excel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center font-sans p-4">
+    
+    <div class="bg-white p-8 rounded-2xl shadow border border-gray-100 flex flex-col items-center text-center max-w-md w-full">
+        <h2 class="text-2xl font-bold text-gray-700 mb-2">Paramétrage de l'Excel</h2>
+        <p class="text-gray-500 mb-6 text-sm">Sélectionnez les onglets à lire et indiquez les machines à rechercher.</p>
+        
+        <form action="{{ url_for('traitement_machines') }}" method="post" class="w-full text-left">
+            
+            <input type="hidden" name="filename" value="{{ filename }}">
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Onglets à analyser :</label>
+                <div class="max-h-40 overflow-y-auto border rounded p-3 bg-gray-50">
+                    {% for onglet in liste_onglets %}
+                        <div class="flex items-center mb-2 last:mb-0">
+                            <input type="checkbox" id="onglet_{{ loop.index }}" name="onglets_choisis" value="{{ onglet }}" class="mr-2" {% if loop.first %}checked{% endif %}>
+                            <label for="onglet_{{ loop.index }}" class="text-gray-700 text-sm">{{ onglet }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label for="machines" class="block text-gray-700 text-sm font-bold mb-2">Nom des machines :</label>
+                <input type="text" id="machines" name="machines" placeholder="Ex: MachineA, MachineB..." required
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <p class="text-xs text-gray-400 mt-1">Séparez les noms par des virgules.</p>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition duration-200">
+                Lancer l'analyse par l'IA
+            </button>
+        </form>
+    </div>
+    
+</body>
+</html>
