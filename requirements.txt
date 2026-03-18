@@ -6,3 +6,4 @@ tesserocr
 flask
 sentence_transformers
 gunicorn
+waitress
