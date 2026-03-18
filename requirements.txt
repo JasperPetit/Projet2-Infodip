@@ -6,3 +6,7 @@ tesserocr
 flask
 sentence_transformers
 gunicorn
+werkzeug
+openpyxl
+python-dotenv
+waitress

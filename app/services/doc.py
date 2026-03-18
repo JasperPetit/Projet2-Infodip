@@ -15,9 +15,7 @@ POSITION_QUESTION = (5,27)
 
 POURCENTAGE_SIMILARITE = 0.95
 
-CHEMIN_TEMPLATE = "app/static/template.xlsx"
-
-
+STATUS= "PAS COMMENCE"
 
 import ollama
 from docling.document_converter import DocumentConverter, PdfFormatOption
@@ -40,9 +38,15 @@ from sentence_transformers import SentenceTransformer, util
 ollama_host = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
 client = Client(host=ollama_host)
 
-MODEL_LLM = "llama3.3:70b"
+MODEL_LLM = "nemotron-3-nano:30b"
 MODEL_EMBEDDING_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 MODEL_EMBEDDING = SentenceTransformer(MODEL_EMBEDDING_NAME)
+
+DOSSIER_DOC = os.path.dirname(os.path.abspath(__file__)) # /app/app/services
+DOSSIER_APP = os.path.dirname(DOSSIER_DOC) # /app/app
+CHEMIN_TEMPLATE = os.path.join(DOSSIER_APP, 'static', 'template.xlsx')
+
+
 
 BORDER = Border(left=Side(style='medium'), right=Side(style='medium'), top=Side(style='medium'), bottom=Side(style='medium'))
 BORDER_MACHINE_HAUT = Border(left=Side(style='medium'), right=Side(style='medium'), top=Side(style='medium'),bottom=Side(style='thin'))
@@ -52,6 +56,8 @@ FOND = PatternFill(start_color="D3D3D3",end_color="D3D3D3",fill_type = "solid")
 
 
 def extraction_sur_mesure(chemin_fichier):
+    global STATUS
+    STATUS = "EXTRACTION EN COURS"
     print(f"\n--- Démembrement du document : {chemin_fichier} ---")
 
     
@@ -95,12 +101,14 @@ def extraction_sur_mesure(chemin_fichier):
                 texte_final += f"{texte_image.strip()}"
                 
     print(texte_final)
+    STATUS = "EXTRACTION TERMINEE"
     return texte_final
 
 
 
 
 def ChatOllama(texte_complet):
+    print('##################DEBUT CHAT OLLAMA##################')
 
     # response: ollama.ChatResponse = ollama.chat(
     #     model=MODEL_LLM,
@@ -171,9 +179,9 @@ def ChatOllama(texte_complet):
     #     JSON_COMPLET[machine] = reponse_JSON
     # print("======================================JSON COMPLET :======================================")
     # print(f"{JSON_COMPLET}")
-
-
-    response: ollama.ChatResponse = ollama.chat(
+    global STATUS
+    STATUS = "ANALYSE EN COURS"
+    response: ollama.ChatResponse = client.chat(
         model=MODEL_LLM,
         messages=[
             {
@@ -185,7 +193,10 @@ def ChatOllama(texte_complet):
              "content": f'''Ce document est un cahier des charges. Dans celui-ci est décrite une/plusieurs machine(s) informatique(s)/ordinateur(s) que l’entreprise voudrait commander à Infodip. Je voudrais que tu récupères dans ce document la liste de toutes les machines qui sont commandées. 
                 Tu me répondras sous la forme d’une liste JSON stricte uniquement, je ne veux PAS D'AUTRE TEXTE OU EXPLICATION QUE LE JSON. Si 2 PC ont exactement la même configuration à un composant de différence près, alors tu les traiteras comme 2 machines distinctes. Lorsqu’un élément est en quantité multiple, tu lui mettras “yx” en préfixe où y est la quantité et x représente le symbole fois. 
                 Tu interpréteras tout seul la catégorie en choisissant celle qui te paraît la plus pertinente pour chaque exigence, en faisant attention à les ajouter à une seule catégorie. 
-                Voici le texte : {texte_complet}
+                Suit a la lettre les régles suivantes <regle>
+                -Garde exactement la meme syntaxe que dans le texte sans retiré d'élement sauf si tu considere que cette élement n'est pas necessaire a ajouté. 
+                <regle>
+
                 Pour chaque machine que tu trouveras, tu l’ajouteras au JSON avec le format suivant. Le texte entre chevrons est un exemple de valeur, ce n’est pas le texte que tu dois mettre dans le JSON final :
                 <template>
                 {{
@@ -208,17 +219,22 @@ def ChatOllama(texte_complet):
                 }}
                 </template>
                 Si une machine a plusieurs composants du même type, alors tu les ajouteras dans la liste des composants comme plusieurs instances. Voici un exemple pour la clé "Other" s'il y avait 3 éléments du texte Other1, Other2 et Other3 qui correspondaient à une seule et même machine/ordinateur, mais cela s’applique pour toutes les catégories : <example> "Other":["<Other1>", "<Other2>", "<Other3>"]</example>."
+                Voici le texte : {texte_complet}
                  '''
+
+
             }
 
         ],
         format="json",
-        options={"temperature": 0}
+        options={"temperature": 0,'num_ctx':1000000},
+
     )
     reponse_JSON = json.loads(response.message.content)
 
     
-
+    print('##################FIN CHAT OLLAMA##################')
+    STATUS = "ANALYSE TERMINEE"
     return reponse_JSON
 
 
@@ -243,6 +259,8 @@ def conversion_machine(tableau_machine:list):
     return resultat
 
 def conversion_composant(dictionnaire:dict, liste_machines:list):
+    global STATUS
+    STATUS = "CONVERSION EN COURS"
     config_dict:dict = {
         "Format": [],
         "CPU": [],
@@ -273,10 +291,14 @@ def conversion_composant(dictionnaire:dict, liste_machines:list):
                 else:
                     new_composant.ajouter_machine(machine)
                     config_dict[current_categorie].append(new_composant)
+    STATUS = "CONVERSION TERMINEE"
     return config_dict
 
 
 def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
+    global STATUS
+    STATUS = "INSERTION EN COURS"
+    print('##################DEBUT INSERTION EXCEL##################')
     wb = openpyxl.load_workbook(CHEMIN_TEMPLATE)
     ws = wb.active
     ws.cell(row=1,column=1).value = MODEL_LLM
@@ -318,7 +340,8 @@ def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
         for cell in row:
             cell.fill = FOND
     
-
+    print('##################FIN INSERTION EXCEL##################')
+    STATUS = "INSERTION TERMINEE"
 
     #Changer l'extension du fichier ici ci l'extension de la template change
     # wb.save(f"resultat/{nom_fichier}.xlsx")
@@ -339,3 +362,5 @@ def matrice_conformite(resultat_JSON, fichier_txt):
     
 
 
+def get_status():
+    return STATUS
