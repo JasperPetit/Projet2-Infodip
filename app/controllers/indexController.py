@@ -128,7 +128,7 @@ resultats_ia = {}
 def travail_de_lia(ticket_id, file_path=None, texte_manuel=None):
    try:
        if file_path:
-           text = doc.extraction_sur_mesure(file_path)
+           text, image_ou_tableau = doc.extraction_sur_mesure(file_path)
            json_final = doc.ChatOllama(text)
            chemin_propre = os.path.splitext(file_path)[0]
            chemin_excel = doc.matrice_conformite(json_final, chemin_propre)
@@ -137,21 +137,28 @@ def travail_de_lia(ticket_id, file_path=None, texte_manuel=None):
            json_final = doc.ChatOllama(texte_manuel)
            fichier_txt_path = os.path.join(UPLOAD_DIRECTORY, 'texte_manuel')
            chemin_excel = doc.matrice_conformite(json_final, fichier_txt_path)
+           image_ou_tableau = False
           
-       resultats_ia[ticket_id] = chemin_excel
+       resultats_ia[ticket_id] = {
+           "status": "termine",
+           "chemin_excel": chemin_excel,
+            "image_ou_tableau": image_ou_tableau
+                                  }
    except Exception as e:
        print(f"Erreur pendant l'analyse : {e}")
-       resultats_ia[ticket_id] = "erreur"
+       resultats_ia[ticket_id] = {"erreur": str(e)}
 
 
 @app.route('/')
 def index():
-   if not request.args.get('actualiser_upload'):
-       session.pop('matrice', None)
+    if not request.args.get('actualiser_upload'):
+        session.pop('matrice', None)
+        session.pop('image_ou_tableau', None)
 
-
-   matrice_generee = session.get('matrice')
-   return render_template('index2.html', excel=matrice_generee)
+    image_ou_tableau=session.get('image_ou_tableau', False)
+    print(image_ou_tableau)
+    matrice_generee = session.get('matrice')
+    return render_template('index2.html', excel=matrice_generee, tableau_ou_image=image_ou_tableau)
 
 
 @app.route('/upload', methods=['POST'])
@@ -172,14 +179,14 @@ def uploadAndAnalyze():
        file.save(file_path)
 
 
-       resultats_ia[ticket_id] = "en_cours"
+       resultats_ia[ticket_id] = {"status": "en_cours"}
        thread = threading.Thread(target=travail_de_lia, args=(ticket_id, file_path, None))
        thread.start()
       
        return redirect(url_for('page_attente', ticket_id=ticket_id))
      
    elif texte_manuel and texte_manuel.strip() != '':
-       resultats_ia[ticket_id] = "en_cours"
+       resultats_ia[ticket_id] = {"status": "en_cours"}
        thread = threading.Thread(target=travail_de_lia, args=(ticket_id, None, texte_manuel))
        thread.start()
       
@@ -191,13 +198,14 @@ def uploadAndAnalyze():
 
 @app.route('/attente/<ticket_id>')
 def page_attente(ticket_id):
-   statut = resultats_ia.get(ticket_id)
+   statut = resultats_ia[ticket_id]["status"]
   
    if statut == "en_cours":
        return render_template('attente.html')
       
    elif statut and statut != "erreur":
-       session['matrice'] = statut
+       session['matrice'] = resultats_ia[ticket_id]["chemin_excel"]
+       session['image_ou_tableau'] = resultats_ia[ticket_id]["image_ou_tableau"]
        resultats_ia.pop(ticket_id, None)
        return redirect(url_for('index', actualiser_upload=True))
       

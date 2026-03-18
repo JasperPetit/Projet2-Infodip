@@ -62,6 +62,12 @@
 <div id="chargement" class="hidden flex-col items-center justify-center mt-8 w-full">
     <lottie-player src="{{ url_for('static', filename='p2.json') }}" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay></lottie-player>
 </div>
+{%if tableau_ou_image %}
+<div class="bg-blue-600 text-white rounded-2xl p-6 w-full max-w-lg shadow-xl border border-blue-400/40 ring-1 ring-white/10">
+  <p>Le fuchier texte que vous voulez analyser contient un/tableau et/ou images, le excel résultat sera donc moins précis et pourra contenir des bugs ! </p>
+</div>
+{% endif %}
+
     </main>
 
    {% if excel %}

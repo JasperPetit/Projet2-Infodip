@@ -58,7 +58,7 @@ FOND = PatternFill(start_color="D3D3D3",end_color="D3D3D3",fill_type = "solid")
 def extraction_sur_mesure(chemin_fichier):
     global STATUS
     STATUS = "EXTRACTION EN COURS"
-    print(f"\n--- Démembrement du document : {chemin_fichier} ---")
+
 
     
     # 1. Configuration : On force Docling à "découper" physiquement les images
@@ -71,12 +71,10 @@ def extraction_sur_mesure(chemin_fichier):
         }
     )
     
-    print("1. Scan de la structure par Docling...")
     resultat = convertisseur.convert(chemin_fichier)
     doc = resultat.document
     texte_final = ""
-    
-    print("2. Parcours intelligent des éléments...")
+    image_ou_tableau = False
     # doc.iterate_items() lit le document de haut en bas, dans le bon ordre 
     for item, level in doc.iterate_items():
         
@@ -87,10 +85,10 @@ def extraction_sur_mesure(chemin_fichier):
         # CAS B : C'est un tableau et on garde le format markdown 
         elif isinstance(item, TableItem):
             texte_final += f"{item.export_to_markdown()}\n\n"
-            
+            image_ou_tableau = True
         # CAS C : C'est une image et on utlise Tessetact 
         elif isinstance(item, PictureItem):
-            
+            image_ou_tableau = True
             # On récupère l'image sous forme de variable (format PIL Image)
             image_pil = item.get_image(doc)
             
@@ -102,7 +100,7 @@ def extraction_sur_mesure(chemin_fichier):
                 
     print(texte_final)
     STATUS = "EXTRACTION TERMINEE"
-    return texte_final
+    return texte_final, image_ou_tableau
 
 
 
@@ -227,7 +225,7 @@ def ChatOllama(texte_complet):
 
         ],
         format="json",
-        options={"temperature": 0,'num_ctx':1000000},
+        options={"temperature": 0.01,'num_ctx':1000000},
 
     )
     reponse_JSON = json.loads(response.message.content)
