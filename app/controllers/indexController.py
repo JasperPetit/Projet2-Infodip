@@ -129,28 +129,30 @@ resultats_ia = {}
 
 
 def travail_de_lia(ticket_id, file_path=None, texte_manuel=None):
-   try:
-       if file_path:
-           text = doc.extraction_sur_mesure(file_path)
-           json_final = doc.ChatOllama(text)
-           chemin_propre = os.path.splitext(file_path)[0]
-           chemin_excel = doc.matrice_conformite(json_final, chemin_propre)
-          
-       elif texte_manuel:
-           json_final = doc.ChatOllama(texte_manuel)
-           fichier_txt_path = os.path.join(UPLOAD_DIRECTORY, 'texte_manuel')
-           chemin_excel = doc.matrice_conformite(json_final, fichier_txt_path)
-          
-       resultats_ia[ticket_id] = chemin_excel
-   except Exception as e:
-       print(f"Erreur pendant l'analyse : {e}")
-       resultats_ia[ticket_id] = "erreur"
+    try:
+        if file_path:
+            text = doc.extraction_sur_mesure(file_path)
+            json_final = doc.ChatOllama(text)
+            chemin_propre = os.path.splitext(file_path)[0]
+            chemin_excel = doc.matrice_conformite(json_final, chemin_propre)
+            
+        elif texte_manuel:
+            json_final = doc.ChatOllama(texte_manuel)
+            fichier_txt_path = os.path.join(UPLOAD_DIRECTORY, 'texte_manuel')
+            chemin_excel = doc.matrice_conformite(json_final, fichier_txt_path)
+            
+        resultats_ia[ticket_id] = chemin_excel
+    except Exception as e:
+        print(f"Erreur pendant l'analyse : {e}")
+        resultats_ia[ticket_id] = "erreur"
+        
+    finally:
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path) 
 
 def travail_de_lia_excel(ticket_id, file_path, onglets_choisis, liste_machines):
     try:
-   
         outil_table = doc_p1.load_excel(file_path)
-
         
         outil_table.selected = [True if nom in onglets_choisis else False for nom in outil_table.sheetnames]
 
@@ -161,7 +163,6 @@ def travail_de_lia_excel(ticket_id, file_path, onglets_choisis, liste_machines):
         chemin_temp = doc_p1.save_compliance_matrix(wb, nom_fichier_temp)
 
         if len(liste_doublons) > 0:
-
             resultats_ia[ticket_id] = {"statut": "doublons", "chemin": chemin_temp, "doublons": liste_doublons}
         else:
             resultats_ia[ticket_id] = {"statut": "termine", "chemin": chemin_temp}
@@ -169,6 +170,10 @@ def travail_de_lia_excel(ticket_id, file_path, onglets_choisis, liste_machines):
     except Exception as e:
         print(f"Erreur pendant l'analyse Excel : {e}")
         resultats_ia[ticket_id] = "erreur"
+
+    finally:
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
 
 
 @app.route('/')

@@ -385,7 +385,9 @@ def merge_similar_features(chemin_fichier, decisions_utilisateur):
                     elif ws.cell(row=r, column=3).value == val2:
                         ws.delete_rows(r)
 
-    chemin_final = "uploads/matrice_finale_validee.xlsx"
+    dossier_uploads = os.path.join(DOSSIER_APP, 'uploads')
+    os.makedirs(dossier_uploads, exist_ok=True)
+    chemin_final = os.path.join(dossier_uploads, "matrice_finale_validee.xlsx")
     wb.save(chemin_final)
     
     return chemin_final
@@ -393,24 +395,11 @@ def merge_similar_features(chemin_fichier, decisions_utilisateur):
 
 def save_compliance_matrix(wb, nom_fichier):
     
-    # 1. On définit le dossier de destination
-    dossier_destination = "uploads"
-    
-    # Sécurité : on s'assure que le dossier 'uploads' existe bien, sinon on le crée
-    if not os.path.exists(dossier_destination):
-        os.makedirs(dossier_destination)
-        
-    # 2. On fabrique le chemin complet (ex: "uploads/matrice_machine1.xlsx")
+    dossier_destination = os.path.join(DOSSIER_APP, 'uploads')
+    os.makedirs(dossier_destination, exist_ok=True)
     chemin_complet = os.path.join(dossier_destination, nom_fichier)
-    
-    # 3. On sauvegarde le fichier Excel sur le disque dur
     wb.save(chemin_complet)
-    
-    print(f"Fichier sauvegardé avec succès : {chemin_complet}", flush=True)
-    
-    # 4. On retourne le chemin pour que ton contrôleur sache où aller le chercher !
     return chemin_complet
-
 
 
 
