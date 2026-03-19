@@ -21,6 +21,7 @@ def load_excel(file_path):
     
     if file_path is not None:
         table_tool = TableTools(file_path)
+        table_tool.current_sheet = 0
         return table_tool
     return None
 
@@ -193,6 +194,7 @@ def build_compliance_matrix(model, machines, t, loaded_file):
         # Selectionner la feuille qui concerne la machine
         #t = st.session_state.t
         for s in range(len(t.sheetnames)):
+            t.current_sheet = s
             if machine in t.sheetnames[s]:
                 break
             if t.selected[s]:
