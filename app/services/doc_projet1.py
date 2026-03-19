@@ -8,6 +8,10 @@ from app.services.tables_utils import TableTools
 import os
 from ollama import Client
 
+DOSSIER_DOC = os.path.dirname(os.path.abspath(__file__)) # /app/app/services
+DOSSIER_APP = os.path.dirname(DOSSIER_DOC) # /app/app
+CHEMIN_TEMPLATE = os.path.join(DOSSIER_APP, 'static', 'Matrice-conformité-Infodip-avec-prompts.xlsx')
+
 
 ollama_host = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
 client = Client(host=ollama_host)
@@ -161,7 +165,7 @@ def build_compliance_matrix(model, machines, t, loaded_file):
         #st.session_state["ce_mode"] = BGEM3FlagModel('BAAI/bge-m3') # use_fp16=True) # plus rapide mais un peu moins précis
 
     # Ouvrir le modèle de matrice de compatibilité vide
-    wb = openpyxl.load_workbook("Matrice-conformité-Infodip-avec-prompts.xlsx")
+    wb = openpyxl.load_workbook(CHEMIN_TEMPLATE)
     ws = wb["Matrice type"]
 
     # Initialiser la 1ere ligne de caractéristique et la dernière

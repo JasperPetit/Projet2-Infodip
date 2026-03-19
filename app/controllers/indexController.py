@@ -267,6 +267,7 @@ def download():
        return redirect('/')
    return send_file(chemin_excel, as_attachment=True)
 
+##################################### ROUTE POUR LE TRAITEMENT DES EXCEL ############################################
 
 @app.route('/traitement_machines', methods=['POST'])
 def traitement_machines():
