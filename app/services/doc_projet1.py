@@ -352,7 +352,7 @@ def as_text(value):
         return str(value)
 
 
-def merge_similar_features(chemin_fichier, decisions_utilisateur):
+def merge_similar_features(chemin_fichier, decisions_utilisateur, nom_final):
     """
     chemin_fichier : le chemin vers l'Excel temporaire (ex: "uploads/temp.xlsx")
     decisions_utilisateur : une liste de dictionnaires envoyée par ta page Web
@@ -387,7 +387,10 @@ def merge_similar_features(chemin_fichier, decisions_utilisateur):
 
     dossier_uploads = os.path.join(DOSSIER_APP, 'uploads')
     os.makedirs(dossier_uploads, exist_ok=True)
-    chemin_final = os.path.join(dossier_uploads, "matrice_finale_validee.xlsx")
+    # chemin_final = os.path.join(dossier_uploads, "matrice_finale_validee.xlsx")
+    # wb.save(chemin_final)
+
+    chemin_final = os.path.join(dossier_uploads, nom_final)
     wb.save(chemin_final)
     
     return chemin_final

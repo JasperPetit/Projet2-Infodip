@@ -196,6 +196,7 @@ def uploadAndAnalyze():
 
 
    if file and file.filename != '':
+       session['nom_fichier_original'] = os.path.splitext(secure_filename(file.filename))[0]
        extension = os.path.splitext(file.filename)[1]
        if extension not in ALLOWED_EXTENSIONS:
            return "Le format du fichier n'est pas valide. Veuillez charger un fichier pdf, docx ou txt."
@@ -337,8 +338,10 @@ def fusionner():
                 "choix": choix
             })
             
+    nom_original = session.get('nom_fichier_original', 'Document')
+    nom_final = f"CM_{nom_original}.xlsx"
     
-    chemin_final = doc_p1.merge_similar_features(chemin_temp, decisions_utilisateur)
+    chemin_final = doc_p1.merge_similar_features(chemin_temp, decisions_utilisateur, nom_final)
     
     session.pop('matrice_temp', None)
     session.pop('liste_doublons', None)
