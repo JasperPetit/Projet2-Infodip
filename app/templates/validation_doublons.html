@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validation des doublons</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center font-sans p-4">
+    
+    <div class="bg-white p-8 rounded-2xl shadow border border-gray-100 flex flex-col max-w-2xl w-full">
+        <h2 class="text-2xl font-bold text-gray-700 mb-2 text-center">L'IA a un doute ! 🤔</h2>
+        <p class="text-gray-500 mb-6 text-sm text-center">Certaines caractéristiques semblent désigner la même chose. Voulez-vous les fusionner pour nettoyer votre tableau ?</p>
+        
+        <form action="{{ url_for('fusionner') }}" method="post" class="w-full">
+            
+            <div class="max-h-96 overflow-y-auto mb-6 pr-2">
+                {% for doublon in doublons %}
+                    <div class="bg-gray-50 border border-gray-200 rounded p-4 mb-4">
+                        <p class="text-sm font-semibold text-gray-700 mb-2">Ressemblance détectée :</p>
+                        <p class="text-blue-600 font-medium mb-3">"{{ doublon.val1 }}" <span class="text-gray-400 font-normal">vs</span> "{{ doublon.val2 }}"</p>
+                        
+                        <input type="hidden" name="val1_{{ loop.index0 }}" value="{{ doublon.val1 }}">
+                        <input type="hidden" name="val2_{{ loop.index0 }}" value="{{ doublon.val2 }}">
+                        
+                        <label class="block text-gray-600 text-xs font-bold mb-1">Votre décision :</label>
+                        <select name="choix_{{ loop.index0 }}" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <option value="{{ doublon.val1 }}">Fusionner sous le nom : {{ doublon.val1 }}</option>
+                            <option value="{{ doublon.val2 }}">Fusionner sous le nom : {{ doublon.val2 }}</option>
+                            <option value="Non">Ne pas fusionner (Garder les deux colonnes)</option>
+                        </select>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <input type="hidden" name="total_doublons" value="{{ doublons|length }}">
+
+            <button type="submit" class="w-full bg-green-500 text-white py-3 rounded font-bold hover:bg-green-600 transition duration-200">
+                Confirmer et terminer l'Excel
+            </button>
+        </form>
+    </div>
+    
+</body>
+</html>

@@ -38,7 +38,7 @@ from sentence_transformers import SentenceTransformer, util
 ollama_host = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
 client = Client(host=ollama_host)
 
-MODEL_LLM = "nemotron-3-nano:30b"
+MODEL_LLM = "qwen2.5-coder:32b"
 MODEL_EMBEDDING_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 MODEL_EMBEDDING = SentenceTransformer(MODEL_EMBEDDING_NAME)
 
