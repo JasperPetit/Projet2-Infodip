@@ -168,9 +168,9 @@ def travail_de_lia_excel(ticket_id, file_path, onglets_choisis, liste_machines):
         chemin_temp = doc_p1.save_compliance_matrix(wb, nom_fichier_temp)
 
         if len(liste_doublons) > 0:
-            resultats_ia[ticket_id] = {"statut": "doublons", "chemin": chemin_temp, "doublons": liste_doublons}
+            resultats_ia[ticket_id] = {"status": "doublons", "chemin": chemin_temp, "doublons": liste_doublons}
         else:
-            resultats_ia[ticket_id] = {"statut": "termine", "chemin": chemin_temp}
+            resultats_ia[ticket_id] = {"status": "termine", "chemin": chemin_temp}
 
     except Exception as e:
         print(f"Erreur pendant l'analyse Excel : {e}")
@@ -244,6 +244,8 @@ def uploadAndAnalyze():
 @app.route('/attente/<ticket_id>')
 def page_attente(ticket_id):
     print("OK 4")
+    print(ticket_id)
+    print(resultats_ia)
     statut = resultats_ia[ticket_id]["status"]
 
     if statut == "en_cours":
@@ -252,14 +254,14 @@ def page_attente(ticket_id):
 
     elif statut == "doublons":
 
-        session['matrice_temp'] = statut["chemin"]
-        session['liste_doublons'] = statut["doublons"]
+        session['matrice_temp'] = resultats_ia[ticket_id]["chemin"]
+        session['liste_doublons'] = resultats_ia[ticket_id]["doublons"]
         resultats_ia.pop(ticket_id, None)
 
         return redirect(url_for('validation_doublons'))
         
     elif statut == "termine":
-        session['matrice'] = statut["chemin"]
+        session['matrice'] = resultats_ia[ticket_id]["chemin"]
         resultats_ia.pop(ticket_id, None)
 
         return redirect(url_for('index', actualiser_upload=True))
