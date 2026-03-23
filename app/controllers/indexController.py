@@ -144,7 +144,7 @@ def travail_de_lia(ticket_id, file_path=None, texte_manuel=None):
             
         resultats_ia[ticket_id] = resultats_ia[ticket_id] = {
             "status": "termine",
-            "chemin_excel": chemin_excel,
+            "chemin": chemin_excel,
             "image_ou_tableau": image_ou_tableau
         }
     except Exception as e:
@@ -267,7 +267,7 @@ def page_attente(ticket_id):
         return redirect(url_for('index', actualiser_upload=True))
         
     elif statut and statut != "erreur":
-        session['matrice'] = resultats_ia[ticket_id]["chemin_excel"]
+        session['matrice'] = resultats_ia[ticket_id]["chemin"]
         session['image_ou_tableau'] = resultats_ia[ticket_id]["image_ou_tableau"]
         resultats_ia.pop(ticket_id, None)
 
