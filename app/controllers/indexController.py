@@ -129,9 +129,10 @@ resultats_ia = {}
 
 
 def travail_de_lia(ticket_id, file_path=None, texte_manuel=None):
+    image_ou_tableau = False
     try:
         if file_path:
-            text = doc.extraction_sur_mesure(file_path)
+            text, image_ou_tableau = doc.extraction_sur_mesure(file_path)
             json_final = doc.ChatOllama(text)
             chemin_propre = os.path.splitext(file_path)[0]
             chemin_excel = doc.matrice_conformite(json_final, chemin_propre)
@@ -139,12 +140,16 @@ def travail_de_lia(ticket_id, file_path=None, texte_manuel=None):
         elif texte_manuel:
             json_final = doc.ChatOllama(texte_manuel)
             fichier_txt_path = os.path.join(UPLOAD_DIRECTORY, 'texte_manuel')
-            chemin_excel = doc.matrice_conformite(json_final, fichier_txt_path)
+            chemin_excel  = doc.matrice_conformite(json_final, fichier_txt_path)
             
-        resultats_ia[ticket_id] = chemin_excel
+        resultats_ia[ticket_id] = resultats_ia[ticket_id] = {
+            "status": "termine",
+            "chemin_excel": chemin_excel,
+            "image_ou_tableau": image_ou_tableau
+        }
     except Exception as e:
-        print(f"Erreur pendant l'analyse : {e}")
-        resultats_ia[ticket_id] = "erreur"
+        print(f"Erreur pendant l'analyse : {e}", flush=True)
+        resultats_ia[ticket_id] = {"status": "erreur"}
         
     finally:
         if file_path and os.path.exists(file_path):
@@ -169,7 +174,7 @@ def travail_de_lia_excel(ticket_id, file_path, onglets_choisis, liste_machines):
 
     except Exception as e:
         print(f"Erreur pendant l'analyse Excel : {e}")
-        resultats_ia[ticket_id] = "erreur"
+        resultats_ia[ticket_id] = {"status": "erreur"}
 
     finally:
         if file_path and os.path.exists(file_path):
@@ -209,19 +214,21 @@ def uploadAndAnalyze():
         file.save(file_path)
 
 
-        resultats_ia[ticket_id] = "en_cours"
+        resultats_ia[ticket_id] = {"status": "en_cours"}
         thread = threading.Thread(target=travail_de_lia, args=(ticket_id, file_path, None))
         thread.start()
         
         return redirect(url_for('page_attente', ticket_id=ticket_id))
        
        if extension in EXCEL_EXTENSION: 
-           file_path = os.path.join(UPLOAD_DIRECTORY, secure_filename(file.filename))
-           file.save(file_path)
-
-           outil_tableTools = doc_p1.load_excel(file_path)
-           liste_onglets = outil_tableTools.sheetnames
-           return render_template('choix_machines.html', liste_onglets = liste_onglets, filename= secure_filename(file.filename))
+            print("OK 1")
+            file_path = os.path.join(UPLOAD_DIRECTORY, secure_filename(file.filename))
+            file.save(file_path)
+            print("OK 2")
+            outil_tableTools = doc_p1.load_excel(file_path)
+            liste_onglets = outil_tableTools.sheetnames
+            print("OK 3")
+            return render_template('choix_machines.html', liste_onglets = liste_onglets, filename= secure_filename(file.filename))
      
    elif texte_manuel and texte_manuel.strip() != '':
        resultats_ia[ticket_id] = {"status": "en_cours"}
@@ -236,37 +243,36 @@ def uploadAndAnalyze():
 
 @app.route('/attente/<ticket_id>')
 def page_attente(ticket_id):
-   statut = resultats_ia[ticket_id]["status"]
-  
-   if statut == "en_cours":
-       return render_template('attente.html')
-   
-   elif isinstance(statut, dict):
+    print("OK 4")
+    statut = resultats_ia[ticket_id]["status"]
+
+    if statut == "en_cours":
+        return render_template('attente.html')
+
+
+    elif statut == "doublons":
+
+        session['matrice_temp'] = statut["chemin"]
+        session['liste_doublons'] = statut["doublons"]
+        resultats_ia.pop(ticket_id, None)
+
+        return redirect(url_for('validation_doublons'))
         
-    
-        if statut["statut"] == "doublons":
+    elif statut == "termine":
+        session['matrice'] = statut["chemin"]
+        resultats_ia.pop(ticket_id, None)
 
-            session['matrice_temp'] = statut["chemin"]
-            session['liste_doublons'] = statut["doublons"]
-            resultats_ia.pop(ticket_id, None)
+        return redirect(url_for('index', actualiser_upload=True))
         
-            return redirect(url_for('validation_doublons'))
-            
-        elif statut["statut"] == "termine":
-            session['matrice'] = statut["chemin"]
-            resultats_ia.pop(ticket_id, None)
+    elif statut and statut != "erreur":
+        session['matrice'] = resultats_ia[ticket_id]["chemin_excel"]
+        session['image_ou_tableau'] = resultats_ia[ticket_id]["image_ou_tableau"]
+        resultats_ia.pop(ticket_id, None)
 
-            return redirect(url_for('index', actualiser_upload=True))
-      
-   elif statut and statut != "erreur":
-       session['matrice'] = resultats_ia[ticket_id]["chemin_excel"]
-       session['image_ou_tableau'] = resultats_ia[ticket_id]["image_ou_tableau"]
-       resultats_ia.pop(ticket_id, None)
-
-       return redirect(url_for('index', actualiser_upload=True))
-      
-   else:
-       return "Une erreur est survenue pendant l'analyse par l'IA."
+        return redirect(url_for('index', actualiser_upload=True))
+        
+    else:
+        return "Une erreur est survenue pendant l'analyse par l'IA."
 
 
 @app.route('/download', methods=['GET'])
@@ -290,7 +296,7 @@ def traitement_machines():
     file_path = os.path.join(UPLOAD_DIRECTORY, filename)
     ticket_id = str(uuid.uuid4())
     
-    resultats_ia[ticket_id] = "en_cours"
+    resultats_ia[ticket_id] = {"status": "en_cours"}
 
     thread = threading.Thread(target=travail_de_lia_excel, args=(ticket_id, file_path, onglets_choisis, liste_machines))
     thread.start()
