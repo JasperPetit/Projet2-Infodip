@@ -129,6 +129,20 @@ resultats_ia = {}
 
 
 def travail_de_lia(ticket_id, file_path=None, texte_manuel=None):
+    '''
+   args :
+       - ticket_id : identifiant unique pour le suivi du travail du LLM
+       - file_path : chemin du fichier uploadé
+       - texte_manuel : texte saisi directement sur l'application
+ 
+   description :
+
+
+   Une fois que l'utilisateur upload un fichier de type (pdf, docx, txt) ou saisit un texte, cette fonction
+   est exécutée dans un thread. Elle utilise les fonction dans doc.py qui permettent de générer la matrice de conformité.
+   Le dictionnaire global est mis à jour avec le chemin du fichier Excel généré (ou "erreur").
+   '''
+
     image_ou_tableau = False
     try:
         if file_path:
@@ -156,6 +170,20 @@ def travail_de_lia(ticket_id, file_path=None, texte_manuel=None):
             os.remove(file_path) 
 
 def travail_de_lia_excel(ticket_id, file_path, onglets_choisis, liste_machines):
+    '''
+   args :
+       - ticket_id : identifiant unique pour le suivi du travail du LLM
+       - file_path : chemin du fichier uploadé
+       - texte_manuel : texte saisi directement sur l'application
+ 
+   description :
+
+
+   Une fois que l'utilisateur upload un fichier de type (pdf, docx, txt) ou saisit un texte, cette fonction
+   est exécutée dans un thread. Elle utilise les fonction dans doc.py qui permettent de générer la matrice de conformité.
+   Le dictionnaire global est mis à jour avec le chemin du fichier Excel généré (ou "erreur").
+   '''
+
     try:
         outil_table = doc_p1.load_excel(file_path)
         
@@ -183,6 +211,16 @@ def travail_de_lia_excel(ticket_id, file_path, onglets_choisis, liste_machines):
 
 @app.route('/')
 def index():
+    '''
+   description : Cette route affiche la page d'accueil. Si la matrice de conformité à été générée, on peut la télécharger
+   via un bouton qui apparait.
+
+
+   return : index2.html, c'est-à-dire la page d'accueil avec ou sans le bouton de téléchargement selon si la matrice est générée
+   ou pas.
+  
+  '''
+
     if not request.args.get('actualiser_upload'):
         session.pop('matrice', None)
         session.pop('image_ou_tableau', None)
@@ -195,57 +233,70 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def uploadAndAnalyze():
-   session.pop('matrice', None)
-   ticket_id = str(uuid.uuid4())
+    '''
+   description : Cette route gère l'upload d'un fichier ou la saisie d'un texte. Elle génère un ticket_id unique pour
+   suivre le travail du LLM. De plus, elle utilise un thread pour exécuter la fonction travail_de_lia ou
+   travail_de_lia_excel selon le type de fichier uploadé.
+
+
+   return : une erreur si le format n'est pas valide. Si c'est un document ou du texte, ça redirige vers page_attente.html
+   et si c'est un excel alors ça redirige vers la page choix_machines.html.
+   '''
+
+    session.pop('matrice', None)
+    ticket_id = str(uuid.uuid4())
   
-   file = request.files.get('document')
-   texte_manuel = request.form.get('texte_manuel')
+    file = request.files.get('document')
+    texte_manuel = request.form.get('texte_manuel')
 
 
-   if file and file.filename != '':
-       session['nom_fichier_original'] = os.path.splitext(secure_filename(file.filename))[0]
-       extension = os.path.splitext(file.filename)[1]
-       if extension not in ALLOWED_EXTENSIONS:
-           return "Le format du fichier n'est pas valide. Veuillez charger un fichier pdf, docx ou txt."
-       
-       if extension in DOCUMENTS_EXTENSION:
-       
-        file_path = os.path.join(UPLOAD_DIRECTORY, secure_filename(file.filename))
-        file.save(file_path)
+    if file and file.filename != '':
+        session['nom_fichier_original'] = os.path.splitext(secure_filename(file.filename))[0]
+        extension = os.path.splitext(file.filename)[1]
+        if extension not in ALLOWED_EXTENSIONS:
+            return "Le format du fichier n'est pas valide. Veuillez charger un fichier pdf, docx ou txt."
+        
+        if extension in DOCUMENTS_EXTENSION:
+        
+            file_path = os.path.join(UPLOAD_DIRECTORY, secure_filename(file.filename))
+            file.save(file_path)
 
 
+            resultats_ia[ticket_id] = {"status": "en_cours"}
+            thread = threading.Thread(target=travail_de_lia, args=(ticket_id, file_path, None))
+            thread.start()
+            
+            return redirect(url_for('page_attente', ticket_id=ticket_id))
+        
+        if extension in EXCEL_EXTENSION: 
+            file_path = os.path.join(UPLOAD_DIRECTORY, secure_filename(file.filename))
+            file.save(file_path)
+            outil_tableTools = doc_p1.load_excel(file_path)
+            liste_onglets = outil_tableTools.sheetnames
+            return render_template('choix_machines.html', liste_onglets = liste_onglets, filename= secure_filename(file.filename))
+        
+    elif texte_manuel and texte_manuel.strip() != '':
         resultats_ia[ticket_id] = {"status": "en_cours"}
-        thread = threading.Thread(target=travail_de_lia, args=(ticket_id, file_path, None))
+        thread = threading.Thread(target=travail_de_lia, args=(ticket_id, None, texte_manuel))
         thread.start()
         
         return redirect(url_for('page_attente', ticket_id=ticket_id))
-       
-       if extension in EXCEL_EXTENSION: 
-            print("OK 1")
-            file_path = os.path.join(UPLOAD_DIRECTORY, secure_filename(file.filename))
-            file.save(file_path)
-            print("OK 2")
-            outil_tableTools = doc_p1.load_excel(file_path)
-            liste_onglets = outil_tableTools.sheetnames
-            print("OK 3")
-            return render_template('choix_machines.html', liste_onglets = liste_onglets, filename= secure_filename(file.filename))
-     
-   elif texte_manuel and texte_manuel.strip() != '':
-       resultats_ia[ticket_id] = {"status": "en_cours"}
-       thread = threading.Thread(target=travail_de_lia, args=(ticket_id, None, texte_manuel))
-       thread.start()
-      
-       return redirect(url_for('page_attente', ticket_id=ticket_id))
 
 
-   return redirect(url_for('index'))
+    return redirect(url_for('index'))
 
 
 @app.route('/attente/<ticket_id>')
 def page_attente(ticket_id):
-    print("OK 4")
-    print(ticket_id)
-    print(resultats_ia)
+    '''
+   description : Cette route affiche la page d'attente pendant la génération de la matrice de conformiité.
+   Elle vérifie régulièrement le dictionnaire resultats_ia pour voir si la matrice est prête ou
+   s'il y a des doublons à valider.
+  
+   return : Si la matrice est prête, redirection vers la page d'accueil avec le bouton de téléchargement. Si des doublons sont détectés, redirection vers la page de validation des doublons.
+   Sinon, on reste sur la page d'attente.
+   '''
+
     statut = resultats_ia[ticket_id]["status"]
 
     if statut == "en_cours":
@@ -279,16 +330,30 @@ def page_attente(ticket_id):
 
 @app.route('/download', methods=['GET'])
 def download():
-   chemin_excel = session.get('matrice')
-   if not chemin_excel:
-       return redirect('/')
-   return send_file(chemin_excel, as_attachment=True)
+    '''
+   description : Cette route gère le téléchargement de la matrice de conformité générée. Elle vérifie si le chemin
+   du fichier Excel est présent dans la session, sinon elle redirige vers la page d'accueil.
+  
+   return : le fichier Excel en téléchargement ou redirection vers la page d'accueil si le chemin n'est pas trouvé.
+   '''
+
+    chemin_excel = session.get('matrice')
+    if not chemin_excel:
+        return redirect('/')
+    return send_file(chemin_excel, as_attachment=True)
 
 ##################################### ROUTE POUR LE TRAITEMENT DES EXCEL ############################################
 
 @app.route('/traitement_machines', methods=['POST'])
 def traitement_machines():
-   
+    '''
+   description : Cette route gère le traitement des fichiers Excel pour la génération de la matrice de conformité.
+   Elle récupère les informations nécessaires (nom du fichier, onglets choisis, machines à analyser) depuis le
+   formulaire soumis par l'utilisateur. Ensuite, elle génère un ticket_id unique et lance un thread pour exécuter la fonction travail_de_lia_excel.
+  
+   return : La page d'attente pendant la génération de la matrice.
+   '''
+
     filename = request.form.get('filename')
     onglets_choisis = request.form.getlist('onglets_choisis')
     machines_brutes = request.form.get('machines')
@@ -309,7 +374,10 @@ def traitement_machines():
 
 @app.route('/doublons', methods=['GET'])
 def validation_doublons():
-    
+    '''
+   description : Cette route affiche la page de validation des doublons sémantiques détectés dans le fichier Excel.
+   '''
+
     liste_doublons = session.get('liste_doublons')
     if not liste_doublons:
         return redirect(url_for('index'))
@@ -319,7 +387,17 @@ def validation_doublons():
 
 @app.route('/fusionner', methods=['POST'])
 def fusionner():
-   
+    '''
+    description : Cette route gère la fusion des doublons sémantiques détectés dans le fichier Excel.
+    Elle récupère les décisions de l'utilisateur depuis le formulaire soumis, puis elle utilise la fonction
+    merge_similar_features pour fusionner ou non les doublons selon les choix du user.
+
+
+    return : La page d'accueil
+
+
+    '''
+
     chemin_temp = session.get('matrice_temp')
     
     
@@ -363,5 +441,14 @@ def fusionner():
        
 @app.route('/status', methods=['GET'])
 def status():
+    '''
+   description : Cette route retourne le statut actuel du traitement des fichiers Excel.
+
+
+   return : Un texte indiquant l'état du traitement (PAS COMMENCE, EXTRACTION EN COURS, EXTRACTION TERMINEE,
+   ANALYSE EN COURS, ANALYSE TERMINEE, CONVERSION EN COURS, CONVERSION TERMINEE, CONVERSION TERMINEE, INSERTION EN COURS,
+   INSERTION TERMINEE,
+   '''
+
     # On renvoie directement le texte brut, pas un dictionnaire
     return doc.get_status()
