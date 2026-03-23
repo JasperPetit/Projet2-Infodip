@@ -193,13 +193,18 @@ def build_compliance_matrix(model, machines, t, loaded_file):
 
         # Selectionner la feuille qui concerne la machine
         #t = st.session_state.t
+        print("OK 5")
         for s in range(len(t.sheetnames)):
+            print("OK 6")
             t.current_sheet = s
             if machine in t.sheetnames[s]:
+                print("OK 7")
                 break
             if t.selected[s]:
+                print("OK 8")
                 r, _ = t.find_cell(machine)
                 if r >= 0:
+                    print("OK 9")
                     break
         else:
             continue  # Machine non trouvee: on zappe (!). Ou s'arrêter avec status "failed" ?

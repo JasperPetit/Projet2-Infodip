@@ -56,9 +56,19 @@ FOND = PatternFill(start_color="D3D3D3",end_color="D3D3D3",fill_type = "solid")
 
 
 def extraction_sur_mesure(chemin_fichier):
+    """
+    Args :
+        - chemin_fichier : le chemin du fichier dont il faut extraire le texte. Il est stocké dans le dossier "uploads" et c'est un string du type "uploads/nom_fichier.pdf"
+    Returns :
+        - texte_final (string) : l'enssemble du contenu texte du document, y compris le texte extrait des images et des tableaux.
+        - image_ou_tableau (bool) : un boolean qui indique si le document contient au moins une image ou un tableau. 
+
+    Description :
+        Cette fonction permet de reccuperer tout le contenu texte du document (pdf, docx, texte) deposer par l'utilisateur.
+    """
     global STATUS
     STATUS = "EXTRACTION EN COURS"
-    print(f"\n--- Démembrement du document : {chemin_fichier} ---")
+
 
     
     # 1. Configuration : On force Docling à "découper" physiquement les images
@@ -71,12 +81,10 @@ def extraction_sur_mesure(chemin_fichier):
         }
     )
     
-    print("1. Scan de la structure par Docling...")
     resultat = convertisseur.convert(chemin_fichier)
     doc = resultat.document
     texte_final = ""
-    
-    print("2. Parcours intelligent des éléments...")
+    image_ou_tableau = False
     # doc.iterate_items() lit le document de haut en bas, dans le bon ordre 
     for item, level in doc.iterate_items():
         
@@ -87,10 +95,10 @@ def extraction_sur_mesure(chemin_fichier):
         # CAS B : C'est un tableau et on garde le format markdown 
         elif isinstance(item, TableItem):
             texte_final += f"{item.export_to_markdown()}\n\n"
-            
+            image_ou_tableau = True
         # CAS C : C'est une image et on utlise Tessetact 
         elif isinstance(item, PictureItem):
-            
+            image_ou_tableau = True
             # On récupère l'image sous forme de variable (format PIL Image)
             image_pil = item.get_image(doc)
             
@@ -102,83 +110,23 @@ def extraction_sur_mesure(chemin_fichier):
                 
     print(texte_final)
     STATUS = "EXTRACTION TERMINEE"
-    return texte_final
+    return texte_final, image_ou_tableau
 
 
 
 
 def ChatOllama(texte_complet):
-    print('##################DEBUT CHAT OLLAMA##################')
+    """
+    Args :
+        - texte_complet (string) : le contenu texte du document deposer par l'utilisateur.
+    Returns :
+        - reponse_JSON (dict) : un dictionnaire qui est l'equivalent de la reponse en JSON du LLM. Elle contient la liste des machines ainsi que toute leur exigences.
 
-    # response: ollama.ChatResponse = ollama.chat(
-    #     model=MODEL_LLM,
-    #     messages=[
-    #         {
-    #             'role': 'system', 
-    #             'content': 'Tu es une IA experte chez INFODIP, une société française qui reçoit des commandes d’ordinateurs/PC qu’elle doit mettre en rack ou en baie puis les fournir à ses clients. Tu reçois des cahiers des charges et des documents contenant des exigences et ton rôle est de les analyser afin d\'en extraire la liste des ordinateurs décrite et de fournir un résultat en JSON sous la forme d’une liste de machines. Tu n’inventes aucune information et n’ajoutes rien qui n’est pas écrit dans les documents. Tu ne changes pas la manière dont sont écrites les informations, reprends uniquement ce qui est dans le document. Tu ajoutes dans le JSON seulement les PC qui sont commandés, pas ceux déjà présents chez le client, et seulement les machines d\'un type correspondant aux types suivants : ["workstation","SAN","laptop","pc", "NAS", "serveurs"].'
-    #         },
-    #         {'role':"user",
-    #          'content': f"""
-    #             Ce document est un cahier des charges. Dans celui-ci est décrite une/plusieurs machine(s) informatique(s)/ordinateur(s) que l’entreprise voudrait commander à Infodip.
-    #             Je voudrais que tu récupères dans ce document la liste de noms de toutes les machines qui sont commandées.
-    #             Tu me répondras sous la forme d’une liste JSON stricte contenant uniquement les noms des differentes machines sans autre parametre ou attribut, juste le nom, je ne veux PAS D'AUTRE TEXTE OU EXPLICATION QUE LE JSON. 
+    Description :
+        Cette fonction réaliser un appel au LLM contenu dans la variable MODEL_LLM en lui demandant d'extraire la liste des machines et leur exigences sous forme de JSON.
+        On passe tout le contenu du document de l'utilisateur directement dans le prompt du LLM.
+    """
 
-    #             Voici le document : {texte_complet}
-    #          """
-    #          }
-    #     ],
-    #     format="json",
-    #     options={"temperature": 0}
-    # )
-    # liste_machines = json.loads(response.message.content)
-    # print("======================================LISTE DES MACHINES :======================================")
-    # print(f"{liste_machines}")
-    # JSON_COMPLET = {}
-    # for machine in liste_machines:
-    #     response_machine: ollama.ChatResponse = ollama.chat(
-    #         model=MODEL_LLM,
-    #         messages=[
-    #             {
-    #                 'role': 'system',
-    #                 'content': 'Tu es une IA experte chez INFODIP, une société française qui reçoit des commandes d’ordinateurs/PC qu’elle doit mettre en rack ou en baie puis les fournir à ses clients. Tu reçois des cahiers des charges et des documents contenant des exigences et ton rôle est de les analyser afin d\'en extraire la liste des ordinateurs décrite et de fournir un résultat en JSON sous la forme d’une liste de machines. Tu n’inventes aucune information et n’ajoutes rien qui n’est pas écrit dans les documents. Tu ne changes pas la manière dont sont écrites les informations, reprends uniquement ce qui est dans le document. Tu ajoutes dans le JSON seulement les PC qui sont commandés, pas ceux déjà présents chez le client, et seulement les machines d\'un type correspondant aux types suivants : ["workstation","SAN","laptop","pc", "NAS", "serveurs"].'
-    #             },
-    #             {
-    #                 "role": "user",
-    #                 "content": f"""
-    #                 Je veux que tu me donnes la configuration complète de la machine {machine} en reprenant uniquement les éléments écrits dans le document. 
-    #                 Tu me répondras sous la forme d’un JSON strict uniquement, je ne veux PAS D'AUTRE TEXTE OU EXPLICATION QUE LE JSON. 
-    #                 Tu interpréteras tout seul la catégorie en choisissant celle qui te paraît la plus pertinente pour chaque exigence, en faisant attention à les ajouter à une seule catégorie. 
-
-    #                 <template>
-    #                 {{
-    #                 "Format":["<format demandé>"],
-    #                 "CPU":["<CPU demandé>"],
-    #                 "Memory":["<Memory demandé>"],
-    #                 "Audio component":["<Audio component demandé>"],
-    #                 "GPU":["<GPU demandé>"],
-    #                 "Network":["<Network demandé>"],
-    #                 "Out of band management":["<Out of band management>"],
-    #                 "USB":["<USB>"],
-    #                 "OS":["<OS>"],
-    #                 "Storage":["<Storage>"],
-    #                 "Noise":["<Noise>"],
-    #                 "Warranty":["<Warranty>"],
-    #                 "License":["<License>"],
-    #                 "Other":["<Other>"]
-    #                 }}
-    #                 </template>
-    #                 Si une machine a plusieurs composants du même type, alors tu les ajouteras dans la liste des composants comme plusieurs instances. Voici un exemple pour la clé "Other" s'il y avait 3 éléments du texte Other1, Other2 et Other3 qui correspondaient à une seule et même machine/ordinateur, mais cela s’applique pour toutes les catégories : <example> "Other":["<Other1>", "<Other2>", "<Other3>"]</example>."
-
-    #                 Voici le document : {texte_complet}
-    #                  """
-    #             }
-    #         ]
-    #     )
-
-    #     reponse_JSON = json.loads(response_machine.message.content)
-    #     JSON_COMPLET[machine] = reponse_JSON
-    # print("======================================JSON COMPLET :======================================")
-    # print(f"{JSON_COMPLET}")
     global STATUS
     STATUS = "ANALYSE EN COURS"
     response: ollama.ChatResponse = client.chat(
@@ -227,18 +175,31 @@ def ChatOllama(texte_complet):
 
         ],
         format="json",
-        options={"temperature": 0,'num_ctx':1000000},
+        options={"temperature": 0.01,'num_ctx':1000000},
 
     )
     reponse_JSON = json.loads(response.message.content)
 
     
-    print('##################FIN CHAT OLLAMA##################')
     STATUS = "ANALYSE TERMINEE"
     return reponse_JSON
 
 
 def check_doublon(dictionnaire_composant:dict, composant_ajoute:logic.composant):
+    """
+    Args : 
+        - dictionnaire_composant (dict) : Le dictionnaire contenant la liste de toute les exigences (de type python composant) du document.
+        - composant_ajoute (composant) : variable contenant le composant dont on veut verifier si il fait deja parti de la liste de toute les composants generé.
+    Returns : 
+        - exigence_compare (composant) : un composant correspondant au doublon de composant_ajoute (si il en a un)
+        - False (bol) : un boolean
+
+    Desciption : 
+        Cette fonction permet de verifier si le composant que l'on passe en parametre (composant_ajoute) existe déja syntaxiquement dans les composants déja créer.
+        Cela permet de ne pas avoir de doublon dans le document final.
+        On utilise d'abord une comparaison syntaxique des deux exigences, puis, si les deux n'ont pas été consideré comme des doublon, on fait un deuxieme test en utilisant de l'embedding.
+        Si les deux test de comparaison de sont pas concluant on renvoie False, sinon le composant déja créer qui correspond a celui qu'on viens de créer.
+    """
     for exigence_compare in dictionnaire_composant[composant_ajoute.categorie]:
         if exigence_compare.compare(composant_ajoute):
             print(f"ON A DETECTE UN DOUBLON ENTRE {exigence_compare.name} ET {composant_ajoute.name}")
@@ -252,13 +213,39 @@ def check_doublon(dictionnaire_composant:dict, composant_ajoute:logic.composant)
     return False
 
 def conversion_machine(tableau_machine:list):
+    """
+    Args : 
+        - tableau_machine (list) : un tableau de chaine de caractere qui contient un liste de machine.
+    Returns :
+        - resultat (list) : la liste des machine du document converti en type python machine.
+
+    Description ;
+        Cette fonction prends la liste de toute les machines du document sous forme de texte et les transforme en type machine, puis en renvoie la liste. 
+    """
     resultat = []
     for machine in tableau_machine:
         new_machine = logic.machine(machine)
         resultat.append(new_machine)
     return resultat
 
+
+
 def conversion_composant(dictionnaire:dict, liste_machines:list):
+    """
+    Args :
+        - dictionnaire (dict) : le dictionnaire contenant le resultat JSON renvoyer par le LLM.
+        - liste_machine (list) : un tableau de toute les machine du document.
+    Returns : 
+        - config_dict (dict) le dictionnaire qui contient la liste de toute les exigences sous le format categorie:tableau d'exgience. Les exigence sont de type python composant.
+
+    Description :
+        Convertit et réorganise les composants d'une liste de machines dans un dictionnaire de configuration global.
+
+        Cette fonction parcourt une liste de machines et un dictionnaire de spécifications pour instancier des 
+        objets `logic.composant`. Elle gère les doublons : si un composant existe déjà dans le dictionnaire 
+        de configuration, la machine courante lui est simplement associée via `ajouter_machine()`. Sinon, 
+        le nouveau composant est ajouté à la liste de sa catégorie correspondante.
+    """
     global STATUS
     STATUS = "CONVERSION EN COURS"
     config_dict:dict = {
@@ -296,9 +283,20 @@ def conversion_composant(dictionnaire:dict, liste_machines:list):
 
 
 def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
+    """
+    Args : 
+        - config_dict (dict) : le dicitonnaire contenant uniquement la liste des exigences du document, de type composant, organisé par catégorie. Reccupere grace a conversion_composant().
+        - liste_machines (list) : La liste de toute les machines de type machine.
+        - nom_fichier (str) : Le nom que devra avoir le fichier excel final.
+    Returns :
+        - une chaine de caractere qui contient le chemin du fichier excel final qui a été sauvegarder dans le dossier resultat.
+    
+    Description :
+        Cette fonction reccupere la liste des machine et d'exigence et l'insere dans la template excel qui sera renvoyer a l'utilisateur.
+        On utilise openyxl pour faire l'insertion. La plupart des coordonées importante sont des constante en haut du document, a modifier si besoin.
+    """
     global STATUS
     STATUS = "INSERTION EN COURS"
-    print('##################DEBUT INSERTION EXCEL##################')
     wb = openpyxl.load_workbook(CHEMIN_TEMPLATE)
     ws = wb.active
     ws.cell(row=1,column=1).value = MODEL_LLM
@@ -340,12 +338,9 @@ def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
         for cell in row:
             cell.fill = FOND
     
-    print('##################FIN INSERTION EXCEL##################')
     STATUS = "INSERTION TERMINEE"
 
-    #Changer l'extension du fichier ici ci l'extension de la template change
-    # wb.save(f"resultat/{nom_fichier}.xlsx")
-    # return f"resultat/{nom_fichier}.xlsx"
+
     wb.save(f'{nom_fichier}.xlsx')
     return f'{nom_fichier}.xlsx'
     
@@ -353,7 +348,22 @@ def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
 
 
 def matrice_conformite(resultat_JSON, fichier_txt):
+    """
+    Args :
+        - resultat_JSON (dict) : le dictionnaire contenant le resultat JSON renvoyer par le LLM.
+        - fichier_txt (str) : le nom du document texte déposé par l'utilisateur.
+    Returns :
+        - Renvoie le resultat de insertion_excel.
+    
+    Description :
+        Cette fonction est la fonction principale qui orchestre toute la logique de conversion du document de l'utilisateur en un fichier excel final.
+        Elle fait appel au autres fonction du document dans l'ordre suivant :
+        - conversion_machine() pour convertir la liste de machine du JSON en une liste de type machine
+        - conversion_composant() pour convertir la liste de composant du JSON en un dictionnaire 
+        - insertion_excel() pour insérer la liste de machine et de composant dans le template excel et sauvegarder le fichier excel final dans le dossier resultat.
 
+        Cette fonction est appellé dans indexController.
+    """
 
     liste_machines = conversion_machine(resultat_JSON.keys())       #Conversion du JSON en liste de machines de la classe machine (logic.py)
     liste_composants = conversion_composant(dictionnaire=resultat_JSON, liste_machines=liste_machines)      
@@ -363,4 +373,11 @@ def matrice_conformite(resultat_JSON, fichier_txt):
 
 
 def get_status():
+    """
+    returns :
+        - STATUS (str) : une chaine de caractere qui indique le status d'avancement de l'analyse du dosument
+    
+    description :
+    Cette fonction permet de reccupere le status d'avancement de l'analyse du document et est utilise pour l'affichage, suceptile d'etre supprimé.
+    """
     return STATUS
