@@ -1,3 +1,5 @@
+from xml.parsers.expat import model
+
 import ollama
 import openpyxl
 from openpyxl.styles import Border, Side
@@ -12,6 +14,7 @@ DOSSIER_DOC = os.path.dirname(os.path.abspath(__file__)) # /app/app/services
 DOSSIER_APP = os.path.dirname(DOSSIER_DOC) # /app/app
 CHEMIN_TEMPLATE = os.path.join(DOSSIER_APP, 'static', 'Matrice-conformité-Infodip-avec-prompts.xlsx')
 
+LLM_MODEL = "qwen2.5-coder:32b"
 
 ollama_host = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
 client = Client(host=ollama_host)
@@ -143,8 +146,8 @@ def notice_similar_features(val1, val2, ce_mode, liste_doublons, model):
 
 
 
-def build_compliance_matrix(model, machines, t, loaded_file):
-
+def build_compliance_matrix(machines, t, loaded_file):
+    model = LLM_MODEL
     t_start = time.time()
     ce_mode = None
 

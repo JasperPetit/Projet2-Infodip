@@ -219,3 +219,4 @@ tessadata/tailwindcss-linux-arm64
 app/uploads
 
 p2venv/
+ce_model/
