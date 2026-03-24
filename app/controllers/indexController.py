@@ -226,7 +226,7 @@ def index():
         session.pop('image_ou_tableau', None)
 
     image_ou_tableau=session.get('image_ou_tableau', False)
-    print(image_ou_tableau)
+    print(f"Tableau ou image : {image_ou_tableau}")
     matrice_generee = session.get('matrice')
     return render_template('index2.html', excel=matrice_generee, tableau_ou_image=image_ou_tableau)
 

@@ -175,13 +175,14 @@ def ChatOllama(texte_complet):
 
         ],
         format="json",
-        options={"temperature": 0.01,'num_ctx':1000000},
+        options={"temperature": 0.01},
 
     )
     reponse_JSON = json.loads(response.message.content)
 
     
     STATUS = "ANALYSE TERMINEE"
+    print(reponse_JSON)
     return reponse_JSON
 
 
