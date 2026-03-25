@@ -47,7 +47,7 @@
         </label>
         <input type="file" id="uploadFichier" name="document" class="hidden">
 
-        <textarea class="outline-none bg-transparent h-full w-full px-2 text-gray-700 placeholder-gray-400 resize-none overflow-y-auto" rows="1" name="texte_manuel" id="texte_manuel" placeholder="Posez votre question ou joignez un cahier des charges..."></textarea>
+        <textarea class="outline-none bg-transparent h-full w-full px-2 text-gray-700 placeholder-gray-400 resize-none overflow-y-auto" rows="1" name="texte_manuel" id="texte_manuel" placeholder="Mettez votre texte ici ou joignez un cahier des charges..."></textarea>
         
         <button type="submit" class="h-full w-14 flex items-center justify-center hover:bg-gray-50 rounded-r-lg transition-colors text-blue-500" title="Lancer l'analyse">
             <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -59,24 +59,23 @@
     <div id="nomFichier" class="text-sm text-blue-600 font-medium mt-3 h-5"></div>
 
 </form>
-<div id="chargement" class="hidden flex-col items-center justify-center mt-8 w-full">
-    <lottie-player src="{{ url_for('static', filename='p2.json') }}" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay></lottie-player>
-</div>
-{%if tableau_ou_image %}
+
+{% if tableau_ou_image %}
 <div class="bg-blue-600 text-white rounded-2xl p-6 w-full max-w-lg shadow-xl border border-blue-400/40 ring-1 ring-white/10">
   <p>Le fichier texte que vous voulez analyser contient un tableau et/ou des images, le excel résultat sera donc moins précis et pourra contenir des erreurs ! </p>
 </div>
 {% endif %}
 
-    </main>
-
-   {% if excel %}
-    <div class="mt-8 mb-12 flex justify-center w-full">
+{% if excel %}
+    <div class="mt-8 ">
         <a href="/download" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
             Télécharger la matrice de conformité
         </a>
     </div>
-   {% endif %}
+{% endif %}
+</main>
+
+
 
 <script>
        // Affiche le nom du fichier sélectionné
