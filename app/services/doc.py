@@ -29,7 +29,6 @@ import pytesseract
 import app.services.logic as logic
 import json
 from ollama import Client
-import pytesseract
 import openpyxl
 import os
 from openpyxl.styles import Border, Side, PatternFill

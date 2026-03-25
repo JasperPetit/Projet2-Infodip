@@ -190,7 +190,7 @@ def travail_de_lia_excel(ticket_id, file_path, onglets_choisis, liste_machines):
         outil_table.selected = [True if nom in onglets_choisis else False for nom in outil_table.sheetnames]
 
         print(f"Début de l'analyse Excel pour les machines : {liste_machines}")
-        wb, liste_doublons = doc_p1.build_compliance_matrix("qwen2.5-coder:32b", liste_machines, outil_table, file_path)
+        wb, liste_doublons = doc_p1.build_compliance_matrix(liste_machines, outil_table, file_path)
 
         nom_fichier_temp = f"matrice_temp_{ticket_id}.xlsx"
         chemin_temp = doc_p1.save_compliance_matrix(wb, nom_fichier_temp)
