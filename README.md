@@ -10,7 +10,7 @@
     - [Lancement localhost](#lancement-localhost)
   - [Maintenance](#maintenance)
     - [Relancer l'application](#relancer-lapplication)
-    - [Installer de nouveaux modèles](#installer-de-nouveaux-modeles)
+    - [Installer de nouveaux modèles](#installer-de-nouveaux-modèles)
     - [Commandes pratiques](#commandes-pratiques)
   - [Explication du fonctionnement](#explication-du-fonctionnement)
     - [Déroulement communication](#déroulement-communication)
@@ -34,6 +34,7 @@ Une première partie a été faite ultérieurement, la génération de matrices 
 - Avant de démarrer l’application veillez à faire attention que la GPU de la DGX Spark soit à jour. Pour cela, accédez à http://localhost:11000/ ou cherchez DGX DASHBOARD dans les fichiers de l’ordinateur, puis vérifiez qu’il n’y a pas de mise à jour à réaliser. Attendez quelques secondes sur la page, l'icône de mise à jour peut prendre du temps à apparaître (cliquer sur le bouton “settings” peut parfois le faire apparaître). S'il y a une mise à jour, faites-la et la machine redémarrera tout seule à la fin. Veillez bien à vous reconnecter à la machine.
 
 - Dans le fichier main.py, assurez vous que la bonne ligne soit commentée et que l'autre non
+- Dans le fichier .env.example, decommanter la ligne de la variable FLASK_SECRET_KEY et remplacfer mdp par le mot de passe secret de votre choix. Ensuite, renommer .env.example en .env
 
 ### Lancement avec containers
 
