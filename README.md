@@ -1,5 +1,9 @@
 #  		Génération de Matrice de conformité 
 
+## Equipe
+- [**@D4CJ**](https://github.com/D4CJ) Dimitar DIMITROV
+- [**@JasperPetit**](https://github.com/JasperPetit) Jasper PETIT
+
 ## Sommaire
 - [Génération de Matrice de conformité](#génération-de-matrice-de-conformité)
   - [Sommaire](#sommaire)
