@@ -61,10 +61,17 @@
 </form>
 
 {% if tableau_ou_image %}
-<div class="bg-blue-600 text-white rounded-2xl p-6 w-full max-w-lg shadow-xl border border-blue-400/40 ring-1 ring-white/10">
+<div class="bg-blue-100 border border-blue-400 text-white-700 px-4 py-3 rounded relative mb-4">
   <p>Le fichier texte que vous voulez analyser contient un tableau et/ou des images, le excel résultat sera donc moins précis et pourra contenir des erreurs ! </p>
 </div>
 {% endif %}
+
+{% if erreur_format %}
+   <div class="bg-blue-100 border border-blue-400 text-white-700 px-4 py-3 rounded relative mb-4" role="alert">
+       <span class="block sm:inline">{{ erreur_format }}</span>
+   </div>
+{% endif %}
+
 
 {% if excel %}
     <div class="mt-8 ">

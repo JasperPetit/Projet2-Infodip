@@ -254,7 +254,8 @@ def uploadAndAnalyze():
         session['nom_fichier_original'] = os.path.splitext(secure_filename(file.filename))[0]
         extension = os.path.splitext(file.filename)[1]
         if extension not in ALLOWED_EXTENSIONS:
-            return "Le format du fichier n'est pas valide. Veuillez charger un fichier pdf, docx ou txt."
+            message_erreur = "Le format du fichier n'est pas valide. Veuillez charger un fichier pdf, docx ou txt."
+            return render_template('index2.html', erreur_format = message_erreur)
         
         if extension in DOCUMENTS_EXTENSION:
         
