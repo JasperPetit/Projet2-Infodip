@@ -212,7 +212,7 @@ def travail_de_lia_excel(ticket_id, file_path, onglets_choisis, liste_machines):
 @app.route('/')
 def index():
     '''
-   description : Cette route affiche la page d'accueil. Si la matrice de conformité à été générée, on peut la télécharger
+   description : Cette route affiche la     d'accueil. Si la matrice de conformité à été générée, on peut la télécharger
    via un bouton qui apparait.
 
 
@@ -313,6 +313,8 @@ def page_attente(ticket_id):
         
     elif statut == "termine":
         session['matrice'] = resultats_ia[ticket_id]["chemin"]
+        session['image_ou_tableau'] = resultats_ia[ticket_id]["image_ou_tableau"]
+
         resultats_ia.pop(ticket_id, None)
 
         return redirect(url_for('index', actualiser_upload=True))
