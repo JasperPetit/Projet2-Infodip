@@ -205,3 +205,18 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+*.pdf
+*.docx
+Mail DeepBrain.docx
+
+
+resultat.json
+resultat/
+tessadata/tailwindcss-linux-arm64
+/uploads/
+app/uploads
+
+p2venv/
+ce_model/
