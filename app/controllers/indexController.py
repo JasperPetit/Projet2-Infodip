@@ -313,6 +313,8 @@ def page_attente(ticket_id):
         
     elif statut == "termine":
         session['matrice'] = resultats_ia[ticket_id]["chemin"]
+        session['image_ou_tableau'] = resultats_ia[ticket_id]["image_ou_tableau"]
+
         resultats_ia.pop(ticket_id, None)
 
         return redirect(url_for('index', actualiser_upload=True))

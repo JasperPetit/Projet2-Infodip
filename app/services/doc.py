@@ -96,20 +96,23 @@ def extraction_sur_mesure(chemin_fichier):
         elif isinstance(item, TableItem):
             texte_final += f"{item.export_to_markdown()}\n\n"
             image_ou_tableau = True
+            print("##########ATTNETION YA UN TABLE######################",flush=True)
         # CAS C : C'est une image et on utlise Tessetact 
         elif isinstance(item, PictureItem):
             image_ou_tableau = True
             # On récupère l'image sous forme de variable (format PIL Image)
             image_pil = item.get_image(doc)
-            
+            print("##########ATTNETION YA UNE IMAGE ######################",flush=True)
+
             if image_pil is not None:
                 texte_image = pytesseract.image_to_string(image_pil, lang='fra+eng')
                 
                 # On ajoute des balises pour aider le LLM à comprendre d'où ça vient
                 texte_final += f"{texte_image.strip()}"
                 
-    print(texte_final)
+    #print(texte_final)
     STATUS = "EXTRACTION TERMINEE"
+    print(f"###############STATU DE IMAGE_OU_TABLEAU : {image_ou_tableau} #####################")
     return texte_final, image_ou_tableau
 
 
@@ -182,7 +185,7 @@ def ChatOllama(texte_complet):
 
     
     STATUS = "ANALYSE TERMINEE"
-    print(reponse_JSON)
+    #print(reponse_JSON)
     return reponse_JSON
 
 
@@ -203,13 +206,13 @@ def check_doublon(dictionnaire_composant:dict, composant_ajoute:logic.composant)
     """
     for exigence_compare in dictionnaire_composant[composant_ajoute.categorie]:
         if exigence_compare.compare(composant_ajoute):
-            print(f"ON A DETECTE UN DOUBLON ENTRE {exigence_compare.name} ET {composant_ajoute.name}")
+            #print(f"ON A DETECTE UN DOUBLON ENTRE {exigence_compare.name} ET {composant_ajoute.name}")
             return exigence_compare
         embedding1 = MODEL_EMBEDDING.encode(exigence_compare.name)
         embedding2 = MODEL_EMBEDDING.encode(composant_ajoute.name)
         similarity = util.cos_sim(embedding1, embedding2)
         if similarity > POURCENTAGE_SIMILARITE:
-            print(f"ON A DETECTE UN DOUBLON ENTRE {exigence_compare.name} ET {composant_ajoute.name}")
+            #print(f"ON A DETECTE UN DOUBLON ENTRE {exigence_compare.name} ET {composant_ajoute.name}")
             return exigence_compare
     return False
 
@@ -325,7 +328,7 @@ def insertion_excel(config_dict:dict, liste_machines:list, nom_fichier:str):
 
         for composant in config_dict[categorie]:
             ws.cell(row=current_row, column=COLONNE_DEBUT_MANDATORY).value = composant.name     #On ajoute le nom du composant dans la colonne des composants en utilisant l'attribut d'objet 'name' de la classe composant. La ligne est current_row, qui augmente a chaque exigence qu'on ajoute et la colonne est COLONNE_DEBUT_MANDATORY qui est la colonne des composants, elle nous bouge pas ce qui nous permet d'utiliser une constante.
-            print(composant.liste_machines)
+            #print(composant.liste_machines)
             for machine in composant.liste_machines:
                 colonne_machine = machine.colonne
                 ws.cell(row=current_row, column=colonne_machine).value = '1'
