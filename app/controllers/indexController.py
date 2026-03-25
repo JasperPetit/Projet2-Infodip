@@ -212,7 +212,7 @@ def travail_de_lia_excel(ticket_id, file_path, onglets_choisis, liste_machines):
 @app.route('/')
 def index():
     '''
-   description : Cette route affiche la     d'accueil. Si la matrice de conformité à été générée, on peut la télécharger
+   description : Cette route affiche la page d'accueil. Si la matrice de conformité à été générée, on peut la télécharger
    via un bouton qui apparait.
 
 
