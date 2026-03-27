@@ -6,6 +6,7 @@
 
 ## Sommaire
 - [Génération de Matrice de conformité](#génération-de-matrice-de-conformité)
+  - [Equipe](#equipe)
   - [Sommaire](#sommaire)
   - [Description :](#description-)
   - [Quick start :](#quick-start-)
@@ -22,23 +23,23 @@
 
 ## Description : 
 
-Infodip est une société française qui reçoit des commandes de PC qu'elle doit mettre en rack ou en baie pour ses clients. Le but de ce projet est de pouvoir générer une matrice de conformité à partir d’un cahier des charges donné par le client. L’accent a été mis sur la confidentialité, on ne peut pas passer par des IA comme ChatGpt, Gemini ou encore Claude pour générer ces matrices, c’est pour cela qu’on a utilisé des solutions open source.
+Infodip est une société française qui reçoit des commandes de PC pour les mettre en rack ou en baie selon les spécifications de ses clients. Le but de ce projet est de pouvoir générer une matrice de conformité à partir d’un cahier des charges donné par le client. Pour des raisons de confidentialité des cahiers des charges, on ne peut pas passer par des IA en ligne comme ChatGpt, Gemini ou encore Claude pour générer ces matrices. C’est pour cela qu’on a utilisé des solutions utilisant un LLM tournant en local.
 
-Ce projet, va être mis à disposition au service commerciale pour leur faire gagner du temps sur cette tâche. 
+Ce projet, va être mis à disposition au service commercial pour leur faire gagner du temps sur cette tâche. 
 
-Une première partie a été faite ultérieurement, la génération de matrices à partir d’un fichier de type tableurs (xlsx, xlsm). Notre objectif était de pouvoir générer cette matrice via un cahier des charges de type document et du texte. Puis implémenter la première partie avec la nôtre dans une application.
+Une première partie a été faite précédemment: la génération de matrices à partir d’un fichier de type tableurs (xlsx, xlsm). Notre objectif était de pouvoir générer cette matrice via un cahier des charges de type document et du texte. Puis implémenter la première partie avec la nôtre dans une application.
 
 ## Quick start :
 
 ### Prérequis 
 - Avoir git sur la machine et cloner le projet avec la commande : 
     
-        git clone https://github.com/JasperPetit/Projet2-Infodip.git
+  `git clone https://github.com/JasperPetit/Projet2-Infodip.git`
 
-- Avant de démarrer l’application veillez à faire attention que la GPU de la DGX Spark soit à jour. Pour cela, accédez à http://localhost:11000/ ou cherchez DGX DASHBOARD dans les fichiers de l’ordinateur, puis vérifiez qu’il n’y a pas de mise à jour à réaliser. Attendez quelques secondes sur la page, l'icône de mise à jour peut prendre du temps à apparaître (cliquer sur le bouton “settings” peut parfois le faire apparaître). S'il y a une mise à jour, faites-la et la machine redémarrera tout seule à la fin. Veillez bien à vous reconnecter à la machine.
+- Avant de démarrer l’application veillez à faire attention que la GPU de la DGX Spark soit à jour. Pour cela, accédez à `http://localhost:11000/` ou cherchez DGX DASHBOARD dans les fichiers de l’ordinateur, puis vérifiez qu’il n’y a pas de mise à jour à réaliser. Attendez quelques secondes sur la page, l'icône de mise à jour peut prendre du temps à apparaître (cliquer sur le bouton “settings” peut parfois le faire apparaître). S'il y a une mise à jour, faites-la et la machine redémarrera tout seule à la fin. Veillez bien à vous reconnecter à la machine.
 
 - Dans le fichier main.py, assurez vous que la bonne ligne soit commentée et que l'autre non
-- Dans le fichier .env.example, decommanter la ligne de la variable FLASK_SECRET_KEY et remplacfer mdp par le mot de passe secret de votre choix. Ensuite, renommer .env.example en .env
+- Dans le fichier .env.example, décommentez la ligne de la variable FLASK_SECRET_KEY et remplacez "mdp" par le mot de passe secret de votre choix. Ensuite, renommez .env.example en .env
 
 ### Lancement avec containers
 
@@ -59,11 +60,11 @@ Pour lancer l'application en local sur la dgx afin qu'elle soit accessible à di
  - Exécuter la ligne suivante dans le terminal :
            
 ```bash
-[sudo] docker compose up -d --build #sudo n’est pas obligatoire si vous avez les droits pour Docker
+[sudo] docker compose up -d --build   #sudo n’est pas obligatoire si vous avez les droits pour Docker
 ```
  - Le container est maintenant lancé et l'application est accessible sur le réseau local. Vous pouvez y accéder avec l'URL : 
  ```
- http://<adresse ip>/5000
+ http://<adresse ip>:5000
 ```
 - Vous pouvez retrouver votre adresse ip en tapant dans le terminal :
   ``` bash 
@@ -77,7 +78,7 @@ Pour lancer l'application en local sur la dgx afin qu'elle soit accessible à di
 Si vous souhaitez accéder à l'application uniquement sur la machine afin d'essayer des modifications alors il vous faudra :
 
 - Vous rendre dans le répertoire de l'application
-- Ouvrez main.py et faites en sorte qu'il ressemble à ceci :
+- Ouvrir main.py et faire en sorte qu'il ressemble à ceci :
  ```python
  from app import app
  from waitress import serve
@@ -86,7 +87,7 @@ Si vous souhaitez accéder à l'application uniquement sur la machine afin d'ess
     app.run(host="localhost", port=8000, debug=True)
     #serve(app, host='0.0.0.0', port=5000, threads=4)
  ```
-- Exécutez les lignes suivantes dans le terminal :
+- Exécuter les lignes suivantes dans le terminal :
 ```bash
 #On créer la venv
 python3 -m venv .venv
@@ -97,7 +98,7 @@ pip install -r requirements.txt
 #On lance le site en local
 python3 main.py
 ```
-- Le site devrait être accessible sur http://localhost:5000/
+- Le site devrait être accessible sur `http://localhost:5000/`
   
 - Pour arrêter l'application, vous devez exécuter ctrl+c dans le terminal.
   
@@ -116,7 +117,7 @@ Si l'application n'est plus accessible en ligne ou que vous avez apporté des mo
 ```bash
 [sudo] docker compose up -d --build
 ```
-Vous pouvez vérifier que les deux containers roule bien avec la commande :
+Vous pouvez vérifier que les deux containers sont bien en train de tourner avec la commande :
 ```bash
 docker ps
 ```
@@ -125,12 +126,12 @@ docker ps
 
 Si vous souhaitez essayer de nouveaux modèles, exécutez dans le terminal :
 ```bash
-docker exec -it ollama_projet_2 ollama pull <mon_modele>
+docker exec -it ollama_projet_2 ollama pull <nom_du_modèle>
 ```
 
 Rendez-vous ensuite dans doc.py et doc_projet_1.py et changer la constante MODEL_LLM :
 ```python
-MODEL_LLM = <mon_modele>
+MODEL_LLM = <nom_du_modèle>
 ```
 
 ### Commandes pratiques 
