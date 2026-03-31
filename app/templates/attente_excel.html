@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta http-equiv="refresh" content="5">
+   <title>Analyse en cours - Infodip</title>
+   <script src="https://cdn.tailwindcss.com"></script>
+   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center font-sans p-4">
+
+
+   <div class="bg-white p-8 rounded-2xl shadow border border-gray-100 flex flex-col items-center text-center max-w-md w-full">
+       <h2 class="text-2xl font-bold text-gray-700 mb-2">Analyse en cours...</h2>
+       <p class="text-gray-500 mb-6 text-sm">L'IA lit et traite vos données.<br>Cette page se rafraîchit automatiquement, merci de patienter.</p>
+       <lottie-player src="{{ url_for('static', filename='p2.json') }}" background="transparent" speed="1" style="width: 180px; height: 180px;" loop autoplay></lottie-player>
+       
+   </div>
+<span hx-get="/excel_status" hx-trigger="every 1s" class="inline-flex items-center rounded-md bg-red-400/10 px-2 py-1 text-xs font-medium text-red-400 inset-ring inset-ring-red-400/20">{{status}}</span>
+
+
+</body>
+</html>

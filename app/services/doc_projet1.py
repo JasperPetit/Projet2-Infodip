@@ -13,6 +13,7 @@ DOSSIER_DOC = os.path.dirname(os.path.abspath(__file__)) # /app/app/services
 DOSSIER_APP = os.path.dirname(DOSSIER_DOC) # /app/app
 CHEMIN_TEMPLATE = os.path.join(DOSSIER_APP, 'static', 'Matrice-conformité-Infodip-avec-prompts.xlsx')
 
+STATUS= "PAS COMMENCE"
 
 ollama_host = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
 client = Client(host=ollama_host)
@@ -149,6 +150,10 @@ def build_compliance_matrix(machines, t, loaded_file):
     t_start = time.time()
     ce_mode = None
 
+    global STATUS
+    STATUS = "ANALYSE EN COURS"
+    print("Je viens de mettre STATUS à 'ANALYSE EN COURS' dans doc_projet1.py")
+    
     if ce_mode is None:
         # Charger un modèle pré-entraîné de cross entropie:
         from sentence_transformers import CrossEncoder
@@ -411,5 +416,13 @@ def save_compliance_matrix(wb, nom_fichier):
     return chemin_complet
 
 
-
+def get_status():
+    """
+    returns :
+        - STATUS (str) : une chaine de caractere qui indique le status d'avancement de l'analyse du dosument
+    
+    description :
+    Cette fonction permet de reccupere le status d'avancement de l'analyse du document et est utilise pour l'affichage, suceptile d'etre supprimé.
+    """
+    return STATUS
 

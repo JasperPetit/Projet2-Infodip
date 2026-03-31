@@ -303,6 +303,8 @@ def page_attente(ticket_id):
     if statut == "en_cours":
         return render_template('attente.html')
 
+    elif statut == "excel_en_cours":
+        return render_template('attente_excel.html')
 
     elif statut == "doublons":
 
@@ -365,7 +367,7 @@ def traitement_machines():
     file_path = os.path.join(UPLOAD_DIRECTORY, filename)
     ticket_id = str(uuid.uuid4())
     
-    resultats_ia[ticket_id] = {"status": "en_cours"}
+    resultats_ia[ticket_id] = {"status": "excel_en_cours"}
 
     thread = threading.Thread(target=travail_de_lia_excel, args=(ticket_id, file_path, onglets_choisis, liste_machines))
     thread.start()
@@ -444,7 +446,7 @@ def fusionner():
 @app.route('/status', methods=['GET'])
 def status():
     '''
-   description : Cette route retourne le statut actuel du traitement des fichiers Excel.
+   description : Cette route retourne le statut actuel du traitement des fichiers Non Excel.
 
 
    return : Un texte indiquant l'état du traitement (PAS COMMENCE, EXTRACTION EN COURS, EXTRACTION TERMINEE,
@@ -454,3 +456,17 @@ def status():
 
     # On renvoie directement le texte brut, pas un dictionnaire
     return doc.get_status()
+
+@app.route('/excel_status', methods=['GET'])
+def excel_status():
+    '''
+   description : Cette route retourne le statut actuel du traitement des fichiers Excel.
+
+
+   return : Un texte indiquant l'état du traitement (PAS COMMENCE, EXTRACTION EN COURS, EXTRACTION TERMINEE,
+   ANALYSE EN COURS, ANALYSE TERMINEE, CONVERSION EN COURS, CONVERSION TERMINEE, CONVERSION TERMINEE, INSERTION EN COURS,
+   INSERTION TERMINEE,
+   '''
+
+    # On renvoie directement le texte brut, pas un dictionnaire
+    return doc_p1.get_status()
